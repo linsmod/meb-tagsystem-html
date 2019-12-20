@@ -1,27 +1,27 @@
 <template>
-  <a-layout style="padding: 6px 0; background: #fff">
-    <a-layout-sider style="background: #fff">
-      <v-tagtree :loading="loading" :dataSource="tags" @search="onSearch" @select="onSelect"></v-tagtree>
-    </a-layout-sider>
-    <a-layout-content style="margin-left :12px;padding: 0 24px; border-left:1px solid #ccc;">
-      <a-empty v-if="!anySelected" description="请选择标签"/>
-      <div v-show="anySelected">
-        <v-taginfo :info="current"></v-taginfo>
-        <br>
-        <br>
-        <v-taghistory
-          :loading="loading"
-          :title="title"
-          :dataSource="data"
-          :chartData="chartData"
-          :dateRange="dateRange"
-          @date-range-change="onDateRangeChange"
-          @pagenation="onPagenation"
-        ></v-taghistory>
-        <br>
-      </div>
-    </a-layout-content>
-  </a-layout>
+	<a-layout style="padding: 6px 0; background: #fff">
+		<a-layout-sider style="background: #fff">
+			<v-tagtree :loading="loading" :dataSource="tags" @search="onSearch" @select="onSelect"></v-tagtree>
+		</a-layout-sider>
+		<a-layout-content style="margin-left :12px;padding: 0 24px; border-left:1px solid #ccc;">
+			<a-empty v-if="!anySelected" description="请选择标签" style="margin:200px auto;"/>
+			<div v-show="anySelected">
+				<v-taginfo :info="current"></v-taginfo>
+				<br>
+				<br>
+				<v-taghistory
+				:loading="loading"
+				:title="title"
+				:dataSource="data"
+				:chartData="chartData"
+				:dateRange="dateRange"
+				@date-range-change="onDateRangeChange"
+				@pagenation="onPagenation"
+				></v-taghistory>
+				<br>
+			</div>
+		</a-layout-content>
+	</a-layout>
 </template>
 <script>
 import tagtree from "@/components/tagtree";

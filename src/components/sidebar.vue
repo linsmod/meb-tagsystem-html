@@ -1,8 +1,8 @@
 <template>
   <a-menu mode="vertical" :selectedKeys="selectedKeys()" @click="click" style="height: 100%">
     <a-menu-item v-for="x in dataSource" :key="x.name">
-      <a-icon :type="x.meta.icon"/>
-      <span>{{x.meta.title}}</span>
+		<a-icon :type="x.meta.icon"/>
+		<span>{{x.meta.title}}</span>
     </a-menu-item>
     <!-- <a-menu-item key="2" v-on:click="route('USER_QUERY')">
       <a-icon type="search"/>

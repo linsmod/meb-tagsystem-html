@@ -168,7 +168,7 @@ export default {
           x => x.date,
           x => x.counts
         );
-        debugger;
+        // debugger;
       } else {
         this.tableData = [];
       }

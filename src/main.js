@@ -21,7 +21,7 @@ Vue.prototype.valueSorter = function(a, b) {
   // ) {
   //   return l.localeCompare(r, "zh");
   // }
-  debugger;
+  // debugger;
   return this.asNum(a) - this.asNum(b);
 };
 Vue.prototype.asNum = function(a) {
