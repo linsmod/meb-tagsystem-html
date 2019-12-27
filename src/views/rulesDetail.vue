@@ -1,9 +1,15 @@
 <template>
     <div class="container">
         <a-form :form="form" @submit="handleSubmit">
-            <a-form-item label="规则名称" :label-col="{ span: 2 }" :wrapper-col="{ span: 5 }" style="border-bottom:1px solid rgb(236, 236, 236);padding:0 0 20px 0;">
-                <a-input v-decorator="['name', { rules: [{ required: true, message: '请输入规则名称!' }] }]"/>
-            </a-form-item>
+            <div style="border-bottom:1px solid rgb(236, 236, 236);margin:0 0 20px 0;display:flex;flex-decoration:row;justify-content:space-between;">
+                <a-form-item label="规则名称" :label-col="{ span: 8 }" :wrapper-col="{ span: 14 }">
+                    <a-input v-decorator="['name', { rules: [{ required: true, message: '请输入规则名称!' }] }]"/>
+                </a-form-item>
+                <div style="margin-right:20px;">
+                    <span>停用规则</span>
+                    <a-switch @change="onChange" />
+                </div>
+            </div>
 
             <p class="createNote"><span>规则创建时间 ： {{nowDate}}</span><span>规则更新时间 ： {{nowDate}}</span><span>已分配用户 ：{{user}} 人</span></p>
 
@@ -26,25 +32,20 @@
             <p class="formTitle">按以下分组分配</p>
             <div class="chooseBox chooseBox2" v-for="(item,index_total) in tags" :key="'total'+index_total">
                 <span class="sort-span sortNum">{{num}}</span>
-                <a-form-item :wrapper-col="{ span: 2 }" style="margin-left:10px;">
+                <a-form-item :wrapper-col="{ span: 4 }" style="margin-left:10px;">
                     <a-select defaultValue="50%" style="width: 100px" @change="handleSelectChange('flow',$event)">
                         <a-select-option v-for="(item,index) in flows" :key="'num'+index" :value="item">{{item}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <span class="sort-span sortTxt">流量</span>
-                <span class="sort-span sortTxt">分配给</span>
+                <span class="sort-span sortTxt">依据</span>
                 <div class="chooseBox chooseBox1">
-                    <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:15px;">
+                    <a-form-item :wrapper-col="{ span: 6 }" style="margin-left:15px;">
                         <a-select showSearch optionFilterProp="children" @change="handleSelectChange('sort',$event)" :filterOption="filterOption" style="width:150px;">
                             <a-select-option v-for="(item_1,index) in item.titles" :key="'total'+index" :value="item_1.name">{{item_1.name}}</a-select-option>
                         </a-select>
                     </a-form-item>
-                    <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:15px;">
-                        <a-select mode="tags" style="width: 200px" @change="handleSelectChange('value_flow',$event)">
-                            <a-select-option v-for="(item_2,index) in item.selections" :key="'selection'+index" :value="item_2.name">{{item_2.name}}</a-select-option>
-                        </a-select>
-                    </a-form-item>
-                    <span class="sort-span sortTxt">的咨询师</span>
+                    <span class="sort-span sortTxt">分配</span>
                     <a-button type="link" style="color:red;margin-top:2px;" @click="deletes(index_total)">删除</a-button>
                 </div>
             </div>
@@ -54,11 +55,11 @@
                 <a-alert message="规则1 和 规则2 覆盖流量有重叠，发生冲突时优先执行规则1" banner class="metion"/>
                 <span class="view" @click="viewManner">点击查看关联规则<a-icon type="right" style="margin-left:5px;"/></span>
             </div>
-            <!-- <a-form-item :wrapper-col="{ span: 12, offset: 5 }">
+            <a-form-item :wrapper-col="{ span: 12 }">
                 <a-button type="primary" html-type="submit">
-                    Submit
+                    保存
                 </a-button>
-            </a-form-item> -->
+            </a-form-item>
         </a-form>
         <a-modal title="关联规则" v-model="visible" @ok="handleOk" class="popup">
             <p>规则1和以下规则覆盖流量有重叠，请确认执行顺序</p>
@@ -79,168 +80,11 @@ export default {
             nowDate:'',         //当前时间
             user:'',         //已分配用户 -- 新建默认为0
             conditions:[         //筛选条件数组
-                {
-                    titles:[
-                        {
-                            name:'渠道'
-                        },
-                        {
-                            name:'意向项目'
-                        },
-                        {
-                            name:'大区'
-                        },
-                        {
-                            name:'省份'
-                        },
-                        {
-                            name:'城市'
-                        }
-                    ],
-                    selections:[
-                        {
-                            name:'官网meb'
-                        },
-                        {
-                            name:'搜索引擎SEM'
-                        },
-                    ]
-                },
-                {
-                    titles:[
-                        {
-                            name:'渠道'
-                        },
-                        {
-                            name:'意向项目'
-                        },
-                        {
-                            name:'大区'
-                        },
-                        {
-                            name:'省份'
-                        },
-                        {
-                            name:'城市'
-                        }
-                    ],
-                    selections:[
-                        {
-                            name:'眼部整形'
-                        },
-                        {
-                            name:'抽脂'
-                        },
-                        {
-                            name:'削骨'
-                        },
-                        {
-                            name:'埋线'
-                        },
-                    ]
-                },
-                {
-                    titles:[
-                        {
-                            name:'渠道'
-                        },
-                        {
-                            name:'意向项目'
-                        },
-                        {
-                            name:'大区'
-                        },
-                        {
-                            name:'省份'
-                        },
-                        {
-                            name:'城市'
-                        }
-                    ],
-                    selections:[
-                        {
-                            name:'西南'
-                        },
-                        {
-                            name:'东北'
-                        },
-                        {
-                            name:'西北'
-                        },
-                        {
-                            name:'东南'
-                        },
-                        {
-                            name:'华中'
-                        },
-                    ]
-                },
-                {
-                    titles:[
-                        {
-                            name:'渠道'
-                        },
-                        {
-                            name:'意向项目'
-                        },
-                        {
-                            name:'大区'
-                        },
-                        {
-                            name:'省份'
-                        },
-                        {
-                            name:'城市'
-                        }
-                    ],
-                    selections:[
-                        {
-                            name:'眼部整形'
-                        },
-                        {
-                            name:'抽脂'
-                        },
-                        {
-                            name:'削骨'
-                        },
-                        {
-                            name:'埋线'
-                        },
-                    ]
-                },
-                {
-                    titles:[
-                        {
-                            name:'渠道'
-                        },
-                        {
-                            name:'意向项目'
-                        },
-                        {
-                            name:'大区'
-                        },
-                        {
-                            name:'省份'
-                        },
-                        {
-                            name:'城市'
-                        }
-                    ],
-                    selections:[
-                        {
-                            name:'眼部整形'
-                        },
-                        {
-                            name:'抽脂'
-                        },
-                        {
-                            name:'削骨'
-                        },
-                        {
-                            name:'埋线'
-                        },
-                    ]
-                },
+                {},
+                {},
+                {},
+                {},
+                {},
             ],
             num:1,              //分组 -- 排序
             flows:['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],           //流量百分比
@@ -327,6 +171,10 @@ export default {
             this.form.setFieldsValue({
                 name: this.index==0 ? '规则' + this.length : '规则' + this.index,
             });
+        },
+        /** 停用按钮 - 确认弹窗 */
+        onChange(checked){
+            console.log(`a-switch to ${checked}`);
         },
         /** 切换下拉框 */
         handleSelectChange(type,value) {

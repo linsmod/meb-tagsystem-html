@@ -7,24 +7,43 @@
 					<li v-for="(item,index) in rules" :key="index" @click="changeTab(index)" :class="isActive==index+1?'active':''">{{item}}<a-icon type="right" class="icon"/></li>
 				</ul>
 			</a-col>
-			<a-col :span="19" class="col-right"><RulesDetail :index="isActive" :length="rules.length"></RulesDetail></a-col>
+			<a-col :span="19" class="col-right">
+				<RulesDetail :index="isActive" :length="rules.length" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
+				<p v-else style="line-height:700px;padding-left:20%;">暂无规则 请先添加规则！</p>
+			</a-col>
 		</a-row>
 	</div>
 </template>
 
 <script>
 import RulesDetail from './rulesDetail'
+import requestData from '../requestMethod'
 export default {
 	components:{
 		RulesDetail
 	},
 	data() {
 		return {
-			rules:['规则1','规则2','规则3','规则4','规则5','规则6','规则7','规则8','规则9'],
+			rules:[],
 			isActive:1,
+			isShow:false
 		};
 	},
+	mounted(){
+		this.getList();
+	},
 	methods:{
+		getList(){
+			requestData('GetRules ',{},'get').then((res)=>{
+				if(res.code==0){
+					this.rules = res.data;
+				}else{
+					alert(res.message);
+				}
+            },(err)=>{
+                console.log(err)
+            })
+		},
 		/** 添加规则 */
 		addRule(){
 			this.isActive = 0;
@@ -33,6 +52,7 @@ export default {
 		/** 切换规则 */
 		changeTab(index){
 			this.isActive = index+1;
+			this.isShow = true;
 		},
 
 	}

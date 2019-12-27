@@ -12,6 +12,7 @@
   "dependencies": {
     "ant-design-vue": "1.4.8",
     "echarts": "4.5.0",
+    "jquery": "^3.4.1",
     "moment": "2.22.1",
     "reqwest": "2.0.5",
     "vue": "2.6.10",

@@ -3,6 +3,7 @@
 		<a-layout id="components-layout-demo-fixed-sider">
 			<a-layout-sider :style="{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0 }">
 				<div class="logo">
+					<!-- <a><router-link to="/">MEB - 标签中心</router-link></a> -->
 					<a>MEB - 标签中心</a>
 				</div>
 				<a-menu mode="inline" theme="dark">
@@ -105,6 +106,6 @@ export default {
   position: relative;
   font-size: 18px;
   line-height: 25px;
-  padding: 3px 15px;
+  padding: 3px 10px;
 }
 </style>

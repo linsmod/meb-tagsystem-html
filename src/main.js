@@ -99,9 +99,10 @@ Vue.prototype.$doRequest = function(path, param = {}, cb) {
   });
 };
 /* eslint-disable no-new */
-new Vue({
+var Vues = new Vue({
   router,
   el: "#app",
   components: { App },
   template: "<App/>"
 });
+export default Vues
