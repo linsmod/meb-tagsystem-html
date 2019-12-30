@@ -15,38 +15,41 @@
 
             <p class="formTitle">满足下列条件的流量</p>
             <div class="chooseBox chooseBox1" v-for="(item,index) in conditions" :key="index">
+            <!-- 左侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select showSearch optionFilterProp="children" @change="handleSelectChange('ways',$event)" :filterOption="filterOption" style="width:300px;">
-                        <a-select-option v-for="(item_1,index_1) in item.titles" :key="index_1" :value="item_1.name">{{item_1.name}}</a-select-option>
+                    <a-select showSearch optionFilterProp="children" @change="handleSelectChange('types',$event,index)" style="width:300px;">
+                        <a-select-option v-for="(item_1,index_1) in matchTypes" :key="index_1" :value="item_1.id">{{item_1.name}}</a-select-option>
                     </a-select>
                 </a-form-item>
+            <!-- 右侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select mode="tags" style="width: 300px" @change="handleSelectChange('value_condition',$event)">
-                        <a-select-option v-for="(item_2,index_2) in item.selections" :key="index_2" :value="item_2.name">{{item_2.name}}</a-select-option>
+                    <a-select mode="tags" style="width: 300px" @change="handleSelectChange('values',$event,index)">
+                        <a-select-option v-for="(item_2,index_2) in matchValues" :key="index_2" :value="item_2.key">{{item_2.val}}</a-select-option>
                     </a-select>
                 </a-form-item>
-                <a-button type="link" style="color:red;" @click="deletes(index)">删除</a-button>
+                <a-button type="link" style="color:red;" @click="deletes('flow',index)">删除</a-button>
             </div>
             <a-button type="link" @click="addSort('condition')" :class="conditions.length==5?'gray':''" style="margin-bottom:20px">添加条件</a-button>
 
             <p class="formTitle">按以下分组分配</p>
             <div class="chooseBox chooseBox2" v-for="(item,index_total) in tags" :key="'total'+index_total">
-                <span class="sort-span sortNum">{{num}}</span>
+                <span class="sort-span sortNum">{{index_total+1}}</span>
                 <a-form-item :wrapper-col="{ span: 4 }" style="margin-left:10px;">
-                    <a-select defaultValue="50%" style="width: 100px" @change="handleSelectChange('flow',$event)">
+                    <a-select style="width: 80px" @change="handleSelectChange('flow',$event,index_total)">
                         <a-select-option v-for="(item,index) in flows" :key="'num'+index" :value="item">{{item}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <span class="sort-span sortTxt">流量</span>
                 <span class="sort-span sortTxt">依据</span>
+            <!-- 分组分配数组 -->
                 <div class="chooseBox chooseBox1">
-                    <a-form-item :wrapper-col="{ span: 6 }" style="margin-left:15px;">
-                        <a-select showSearch optionFilterProp="children" @change="handleSelectChange('sort',$event)" :filterOption="filterOption" style="width:150px;">
-                            <a-select-option v-for="(item_1,index) in item.titles" :key="'total'+index" :value="item_1.name">{{item_1.name}}</a-select-option>
+                    <a-form-item :wrapper-col="{ span: 12 }" style="margin-left:15px;">
+                        <a-select showSearch optionFilterProp="children" @change="handleSelectChange('sort',$event,index_total)" style="width:200px;">
+                            <a-select-option v-for="(item_1,index) in deliverTypes" :key="'total'+index" :value="item_1.id">{{item_1.name}}</a-select-option>
                         </a-select>
                     </a-form-item>
                     <span class="sort-span sortTxt">分配</span>
-                    <a-button type="link" style="color:red;margin-top:2px;" @click="deletes(index_total)">删除</a-button>
+                    <a-button type="link" style="color:red;margin-top:2px;" @click="deletes('sorts',index_total)">删除</a-button>
                 </div>
             </div>
             <!-- 这里判断颜色的条件需要改变 是所有百分比加起来是100%就不能添加了 -->
@@ -56,9 +59,7 @@
                 <span class="view" @click="viewManner">点击查看关联规则<a-icon type="right" style="margin-left:5px;"/></span>
             </div>
             <a-form-item :wrapper-col="{ span: 12 }">
-                <a-button type="primary" html-type="submit">
-                    保存
-                </a-button>
+                <a-button type="primary" html-type="submit"> 保存 </a-button>
             </a-form-item>
         </a-form>
         <a-modal title="关联规则" v-model="visible" @ok="handleOk" class="popup">
@@ -71,82 +72,25 @@
 </template>
 
 <script>
+import requestData from '../requestMethod'
 export default {
     props:['index','length'],
     data() {
         return {
+            manner_name:'',         //规则名称
             formLayout: 'inline',
             form: this.$form.createForm(this, { name: 'rules' }),
             nowDate:'',         //当前时间
             user:'',         //已分配用户 -- 新建默认为0
-            conditions:[         //筛选条件数组
-                {},
-                {},
-                {},
-                {},
-                {},
-            ],
+            conditions:[],         //筛选条件数组
+            matchTypes:[],          //左侧下拉列表 - 匹配类型
+            matchValues:[],         //右侧下拉列表 - 匹配值     -- 与左侧为联动关系
+            deliverTypes:[],           // 分配类型
+            matchers:[],                //匹配条件
+            delivers:[],                   //分配条件
             num:1,              //分组 -- 排序
             flows:['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],           //流量百分比
-            tags:[
-                {
-                    titles:[
-                        {
-                            name:'眼部转化率'
-                        },
-                        {
-                            name:'入职时间'
-                        },
-                        {
-                            name:'其他啥的随便'
-                        },
-                    ],
-                    selections:[
-                        {
-                            name:'40%~60%'
-                        },
-                        {
-                            name:'40%'
-                        },
-                        {
-                            name:'60%'
-                        },
-                        {
-                            name:'20%~30%'
-                        },
-                        {
-                            name:'20%'
-                        },
-                        {
-                            name:'30%'
-                        },
-                    ]
-                },
-                {
-                    titles:[
-                        {
-                            name:'眼部转化率'
-                        },
-                        {
-                            name:'入职时间'
-                        },
-                        {
-                            name:'其他啥的随便'
-                        },
-                    ],
-                    selections:[
-                        {
-                            name:'近半年'
-                        },
-                        {
-                            name:'近一年'
-                        },
-                        {
-                            name:'近两年'
-                        }
-                    ]
-                }
-            ],
+            tags:[],                    //
             visible:false,               //弹窗
             manner:[                    //弹窗规则数组
                 {
@@ -158,7 +102,8 @@ export default {
                 {
                     name:'规则3'
                 },
-            ]
+            ],
+            flowSetNum:'',               //分组分配流量
         }
     },
     mounted(){
@@ -169,50 +114,118 @@ export default {
         changeForm(){
             /** 改变规则名称 */
             this.form.setFieldsValue({
-                name: this.index==0 ? '规则' + this.length : '规则' + this.index,
+                name: this.index==0 ? ('规则' + this.length) : ('规则' + (this.index + 1)),
             });
         },
         /** 停用按钮 - 确认弹窗 */
         onChange(checked){
             console.log(`a-switch to ${checked}`);
         },
-        /** 切换下拉框 */
-        handleSelectChange(type,value) {
-            console.log(type,value)
-            // this.form.setFieldsValue({
-            //     name: `Hi, ${value === 'male' ? 'man' : 'lady'}!`,
-            // });
-        },
-        filterOption(input, option) {
-            return (
-                option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            );
-        },
-        /** 删除 */
-        deletes(index){
-            console.log(index)
-            this.conditions.splice(index,1)
-        },
         /** 添加条件 */
         addSort(type){
             switch (type) {
-                case 'condition':
+                case 'condition':           //添加满足条件的流量
+                    this.conditions.push({});
+                    if(this.matchTypes.length==0){     //如果已经请求到 不重复请求
+                        this.getListLeft();             //获取接口数据
+                    }
                     if(this.conditions.length == 5){
-                        this.$error({
-                            title: '最多5个条件！'
-                        });
+                        this.$error({ title: '最多5个条件！' });
                     }
                     break;
                 case 'flow':
-                    if(this.tags.length == 5){
-                        this.$error({
-                            title: '百分比必须等于100%！'
-                        });
+                    this.tags.push({});
+                    if(this.deliverTypes.length==0){
+                        this.getListBottom();
                     }
                     break;
                 default:
                     break;
             }
+        },
+        /** 切换下拉框 */
+        handleSelectChange(type,value,index) {
+            switch (type) {
+                case 'types':
+                    this.getListRight(value);
+                    for(let i = 0; i < this.matchers.length; i++){
+                        if(this.matchers[i].TypeId == value){
+                            this.$error({title:'不能重复选择！'});
+                        }
+                    }
+                    this.matchers.push({
+                        id:0,
+                        TypeId:value,
+                        Values:[]
+                    })
+                    break;
+                case 'values':
+                    this.matchers[index].Values = value;
+                    break;
+                case 'flow':
+                    this.flowSetNum = Number(this.flowSetNum) + Number(value.slice(0,-1));
+                    if(this.flowSetNum > 100){
+                        this.$error({ title: '百分比必须等于100%！' });
+                    }
+                    this.delivers.push({
+                        id:0,
+                        Rate:value,
+                        TypeId:''
+                    })
+                    break;
+                case 'sort':
+                    this.delivers[index].TypeId = value;
+                    break;
+                default:
+                    break;
+            }
+        },
+        /** 获取满足条件流量  左侧下拉列表的值 */
+        getListLeft(){
+            requestData('GetMatchTypes',{},'get').then((res)=>{
+				this.matchTypes = res;
+            },(err)=>{
+                console.log(err)
+            })
+        },
+        /** 右侧下拉列表的值 -- 与左侧为联动关系 */
+        getListRight(id){
+            requestData('GetMatchValues',{
+                id:id
+            },'get').then((res)=>{
+				this.matchValues = res;
+            },(err)=>{
+                console.log(err)
+            })
+        },
+        /** 分组分配下拉列表的值 */
+        getListBottom(){
+            requestData('GetDeliverTypes',{},'get').then((res)=>{
+				this.deliverTypes = res;
+            },(err)=>{
+                console.log(err)
+            })
+        },
+        /** 删除 */
+        deletes(type,index){        //type -- flow-流量 sorts-分组
+            if(type=='flow'){
+                this.conditions.splice(index,1);
+                this.matchers.splice(index,1);
+            }else{
+                this.tags.splice(index,1);
+                this.delivers.splice(index,1);
+            }
+        },
+        /** 提交表单 */
+        handleSubmit(e) {
+            e.preventDefault();
+            var that = this;
+            this.form.validateFields((err, values) => {
+                if (!err) {
+                    that.manner_name = values;
+                }
+            })
+            console.log(this.matchers,this.delivers)
         },
         /** 查看冲突规则 */
         viewManner(){
@@ -235,15 +248,6 @@ export default {
         /** 弹窗确定事件 */
         handleOk(e){
             this.visible = false;
-        },
-        /** 提交表单 */
-        handleSubmit(e) {
-            e.preventDefault();
-            this.form.validateFields((err, values) => {
-                if (!err) {
-                    console.log('Received values of form: ', values);
-                }
-            });
         },
     },
     watch:{
