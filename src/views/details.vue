@@ -187,6 +187,7 @@ export default {
           user: this.$route.query.user,
           labels: this.labelString
         },
+        'get',
         d => {
           this.loading = false;
           window.detailChart && window.detailChart.hideLoading();

@@ -10,7 +10,8 @@ import reqwest from "reqwest";
 import moment from "moment";
 Vue.use(Antd);
 Vue.config.productionTip = true;
-Vue.prototype.$baseURI = "https://dh.meb.com:8055/api/userlabel";
+Vue.prototype.$baseURI = "http://120.26.67.183:8046/api/tagcenter";
+// Vue.prototype.$baseURI = "https://dh.meb.com:8055/api/userlabel";
 //Vue.prototype.$baseURI = "http://127.0.0.1:8056/api/userlabel";
 Vue.prototype.valueSorter = function(a, b) {
   // var l = a || "";
@@ -82,16 +83,16 @@ Vue.prototype.$getUpdateTime = function(cb) {
   if (this.$updateTime) {
     cb.call(this, this.$updateTime);
   } else {
-    this.$doRequest("GetUpdateTime", {}, d => {
+    this.$doRequest("GetUpdateTime", {}, 'get' , d => {
       this.$updateTime = moment(d, "YYYYMMDD").format("YYYY-MM-DD");
       cb.call(this, this.$updateTime);
     });
   }
 };
-Vue.prototype.$doRequest = function(path, param = {}, cb) {
+Vue.prototype.$doRequest = function(path, param = {}, method, cb) {
   reqwest({
     url: this.$baseURI + "/" + path,
-    method: "get",
+    method: method,
     data: param,
     type: "json"
   }).then(data => {

@@ -92,7 +92,7 @@ export default {
     },
     getLabels(cb) {
       //1、下载标签的定义信息
-      this.$doRequest("GetLabels", {}, d => {
+      this.$doRequest("GetLabels", {},'get', d => {
         this.labelDefs = d;
         window.labelDefs = d;
         this.options = d
@@ -145,6 +145,7 @@ export default {
           labels: this.labelString(),
           date: this.$fixDate(this.updateTime)
         },
+        'get',
         d => {
           this.tableData = d;
           window.tableData = d;

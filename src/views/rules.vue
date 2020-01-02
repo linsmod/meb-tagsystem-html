@@ -4,11 +4,11 @@
       		<a-col :span="5" class="col-left">
 				<ul>
 					<li>规则<a-button type="primary" class="button" @click="addRule">添加规则</a-button></li>
-					<li v-for="(item,index) in rules" :key="index" @click="changeTab(index)" :class="isActive==index?'active':''">{{item}}<a-icon type="right" class="icon"/></li>
+					<li v-for="(item,index) in rules" :key="index" @click="changeTab(index)" :class="isActive==index?'active':''">{{item.name}}<a-icon type="right" class="icon"/></li>
 				</ul>
 			</a-col>
 			<a-col :span="19" class="col-right">
-				<RulesDetail :index="isActive" :length="rules.length" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
+				<RulesDetail :index="isActive" :length="rules.length" :rules="rules" :details="details" v-if="(rules&&rules.length!=0)||isShow" @reload="getList"></RulesDetail>
 				<div v-else class="noRule">暂无规则，请先添加规则！</div>
 			</a-col>
 		</a-row>
@@ -17,16 +17,17 @@
 
 <script>
 import RulesDetail from './rulesDetail'
-import requestData from '../requestMethod'
 export default {
 	components:{
 		RulesDetail
 	},
 	data() {
 		return {
-			rules:[],
-			isActive:0,
-			isShow:false
+			rules:[],		//规则列表
+			details:{},			//规则详情
+			isActive:0,			//是否当前选中
+			isShow:false,			//规则列表是否为空
+			id:0					//初始请求参数id
 		};
 	},
 	mounted(){
@@ -34,26 +35,44 @@ export default {
 	},
 	methods:{
 		getList(){
-			requestData('GetRules ',{},'get').then((res)=>{
-				// if(res.code==0){
+			this.$doRequest("GetRules",{} , 'get' , res => {
 				this.rules = res.data;
-				// }else{
-				// 	alert(res.message);
-				// }
-            },(err)=>{
-                console.log(err)
-            })
+				this.id = this.rules[0].id;
+				this.getDetails();
+			});
 		},
 		/** 添加规则 */
 		addRule(){
-			// this.isActive = 0;
-			this.rules.push('规则'+(this.rules.length+1));
+			this.rules.push({
+				createTime: "",
+				enabled: false,
+				id: 0,
+				name: "规则" + (this.rules.length + 1),
+				order: 0,
+				updateTime: ""
+			});
 		},
 		/** 切换规则 */
 		changeTab(index){
 			this.isActive = index;
 			this.isShow = true;
+			this.id = this.rules[index].id;
+			if(this.id == 0){
+				return
+			}else{
+				this.getDetails();
+			}
 		},
+        /** 获取规则详情 */
+        getDetails(index){
+            this.$doRequest("GetDetail",{
+                id:this.id
+            } , 'post' , res => {
+                if(res.code==0){
+					this.details = res.data;
+				}
+            });
+        },
 
 	}
 };

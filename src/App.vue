@@ -57,11 +57,11 @@ export default {
     };
   },
 	mounted() {
-		this.getUpdateTime();
+		// this.getUpdateTime();
 	},
 	methods: {
 		getUpdateTime() {
-			this.$doRequest("GetUpdateTime", {}, d => {
+			this.$doRequest("GetUpdateTime", {},'get', d => {
 				this.updateTime = moment(d, "YYYYMMDD").format("YYYY-MM-DD");
 				this.spinning = false;
 				this.route("tags");

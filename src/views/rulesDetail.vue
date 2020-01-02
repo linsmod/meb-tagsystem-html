@@ -7,14 +7,14 @@
                 </a-form-item>
                 <div style="margin-right:20px;">
                     <span>停用规则</span>
-                    <a-switch @change="onChange" />
+                    <a-switch @change="onChange" :checked="enabled"/>
                 </div>
             </div>
 
-            <p class="createNote"><span>规则创建时间 ： {{nowDate}}</span><span>规则更新时间 ： {{nowDate}}</span><span>已分配用户 ：{{user}} 人</span></p>
+            <p class="createNote"><span>规则创建时间 ： {{ rules[index] ? rules[index].createTime : '' }}</span><span>规则更新时间 ： {{ rules[index] ? rules[index].updateTime : '' }}</span><span>已分配用户 ：{{ rules[index] ? rules[index].order : '' }} 人</span></p>
 
             <p class="formTitle">满足下列条件的流量</p>
-            <div class="chooseBox chooseBox1" v-for="(item,index) in conditions" :key="index">
+            <div class="chooseBox chooseBox1" v-for="(item,index) in matchers" :key="index">
             <!-- 左侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
                     <a-select showSearch optionFilterProp="children" @change="handleSelectChange('types',$event,index)" style="width:300px;">
@@ -29,14 +29,14 @@
                 </a-form-item>
                 <a-button type="link" style="color:red;" @click="deletes('flow',index)">删除</a-button>
             </div>
-            <a-button type="link" @click="addSort('condition')" :class="conditions.length==5?'gray':''" style="margin-bottom:20px">添加条件</a-button>
+            <a-button type="link" @click="addSort('condition')" style="margin-bottom:20px" :disabled="condition_btn">添加条件</a-button>
 
             <p class="formTitle">按以下分组分配</p>
             <div class="chooseBox chooseBox2" v-for="(item,index_total) in tags" :key="'total'+index_total">
                 <span class="sort-span sortNum">{{index_total+1}}</span>
                 <a-form-item :wrapper-col="{ span: 4 }" style="margin-left:10px;">
-                    <a-select style="width: 80px" @change="handleSelectChange('flow',$event,index_total)">
-                        <a-select-option v-for="(item,index) in flows" :key="'num'+index" :value="item">{{item}}</a-select-option>
+                    <a-select style="width: 80px" @change="handleSelectChange('flow',$event,index_total)"  @dropdownVisibleChange="(open)=> handleDropdown('flow',index_total,open)" >
+                        <a-select-option v-for="(_item,index) in item.scope" :key="'num'+index" :value="_item">{{_item}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <span class="sort-span sortTxt">流量</span>
@@ -52,8 +52,8 @@
                     <a-button type="link" style="color:red;margin-top:2px;" @click="deletes('sorts',index_total)">删除</a-button>
                 </div>
             </div>
-            <!-- 这里判断颜色的条件需要改变 是所有百分比加起来是100%就不能添加了 -->
-            <a-button type="link" @click="addSort('flow')" :class="tags.length==5?'gray':''" style="margin-bottom:20px">添加分组</a-button>
+            <a-button type="link" @click="addSort('flow')" style="margin-bottom:20px">添加分组</a-button>
+            
             <div class="conflictTip" v-if="isConflict">
                 <a-alert message="规则1 和 规则2 覆盖流量有重叠，发生冲突时优先执行规则1" banner class="metion"/>
                 <span class="view" @click="viewManner">点击查看关联规则<a-icon type="right" style="margin-left:5px;"/></span>
@@ -72,20 +72,16 @@
 </template>
 
 <script>
-import requestData from '../requestMethod'
 export default {
-    props:['index','length'],
+    props:['index','length','rules','details'],
     data() {
         return {
-            id:0,                   //新增规则id为0 修改规则 id为规则自己的id
             isUpdate:false,             //检测冲突 新增为false 修改为true
             manner_name:'',         //规则名称
             formLayout: 'inline',
             form: this.$form.createForm(this, { name: 'rules' }),
-            enabled:false,          //是否停用规则
-            nowDate:'',         //当前时间
-            user:'',         //已分配用户 -- 新建默认为0
-            conditions:[],         //筛选条件数组
+            enabled:false,
+            condition_btn:false,             //添加条件 - 按钮权限
             matchTypes:[],          //左侧下拉列表 - 匹配类型
             matchValues:[],         //右侧下拉列表 - 匹配值     -- 与左侧为联动关系
             deliverTypes:[],           // 分配类型
@@ -113,51 +109,76 @@ export default {
     },
     mounted(){
         this.changeForm();
+        // console.log(this.rules)
     },
     methods:{
         /** 切换规则时 对应修改表单展示 */
         changeForm(){
             /** 改变规则名称 */
             this.form.setFieldsValue({
-                name: this.index==0 ? ('规则' + this.length) : ('规则' + (this.index + 1)),
+                // name: this.index==0 ? ('规则' + this.length) : ( this.rules ? this.rules[this.index].name : (('规则' + (this.index + 1)))),
+                name:this.rules ? this.rules[this.index].name : (('规则' + (this.index + 1)))
             });
         },
         /** 停用按钮 - 确认弹窗 */
         onChange(checked){
-            if(this.index==0){      //新增时点停用规则不判断
+            if(this.rules[this.index].id == 0){       //如果是新增 则停用按钮不起作用
                 return
             }else{
-                requestData('EnableRule',{
-                    id:this.id,
-                    enabled:checked
-                },'post').then((res)=>{
-                    console.log(res)
-                },(err)=>{
-                    console.log(err)
-                })
+                this.$doRequest("EnableRule",{
+                    id:this.rules[this.index].id,
+                    enable:checked
+                } , 'post' , res => {
+                    if(res.code==0){
+                       this.enabled = checked;
+                    }
+                });
             }
-            // this.enabled = checked;
         },
         /** 添加条件 */
         addSort(type){
             switch (type) {
                 case 'condition':           //添加满足条件的流量
-                    this.conditions.push({});
+                    this.matchers.push({
+                        id:this.rules[this.index].id,
+                        TypeId:'',
+                        Values:[]
+                    })
                     if(this.matchTypes.length==0){     //如果已经请求到 不重复请求
                         this.getListLeft();             //获取接口数据
                     }
-                    if(this.conditions.length == 5){
+                    if(this.matchers.length == 5){
                         this.$error({ title: '最多5个条件！' });
+                        this.condition_btn = true;
                     }
                     break;
                 case 'flow':
-                    this.tags.push({});
+                    this.tags.push({             //****** */
+                        scope:JSON.parse(JSON.stringify(this.flows)),
+                        value:0 
+                    });
+                    this.delivers.push({
+                        id:this.rules[this.index].id,
+                        Rate:'',
+                        TypeId:''
+                    })
                     if(this.deliverTypes.length==0){
                         this.getListBottom();
                     }
                     break;
                 default:
                     break;
+            }
+        },
+        handleDropdown(type,index,open){
+            if(open){
+                let allValue=0, resultScope = [];
+                this.tags.map((item,idx)=>{
+                    if(index!=idx){
+                        allValue+=item.value
+                    }
+                })
+                this.tags[index].scope = this.flows.slice(0,(100-allValue)/10);
             }
         },
         /** 切换下拉框 */
@@ -170,25 +191,14 @@ export default {
                             this.$error({title:'不能重复选择！'});
                         }
                     }
-                    this.matchers.push({
-                        id:0,
-                        TypeId:value,
-                        Values:[]
-                    })
+                    this.matchers[index].TypeId = value;
                     break;
                 case 'values':
                     this.matchers[index].Values = value;
                     break;
                 case 'flow':
-                    this.flowSetNum = Number(this.flowSetNum) + parseInt(value);
-                    if(this.flowSetNum > 100){
-                        this.$error({ title: '百分比必须等于100%！' });
-                    }
-                    this.delivers.push({
-                        id:0,
-                        Rate:parseInt(value),
-                        TypeId:''
-                    })
+                    this.tags[index].value = parseInt(value);
+                    this.delivers[index].Rate = parseInt(value);
                     break;
                 case 'sort':
                     this.delivers[index].TypeId = value;
@@ -199,34 +209,25 @@ export default {
         },
         /** 获取满足条件流量  左侧下拉列表的值 */
         getListLeft(){
-            requestData('GetMatchTypes',{},'get').then((res)=>{
-				this.matchTypes = res;
-            },(err)=>{
-                console.log(err)
-            })
+            this.$doRequest("GetMatchTypes",{} , 'get' , res => {
+                this.matchTypes = res;
+            });
         },
         /** 右侧下拉列表的值 -- 与左侧为联动关系 */
         getListRight(id){
-            requestData('GetMatchValues',{
-                id:id
-            },'get').then((res)=>{
-				this.matchValues = res;
-            },(err)=>{
-                console.log(err)
-            })
+            this.$doRequest("GetMatchValues",{ id:id } , 'get' , res => {
+                this.matchValues = res;
+            });
         },
         /** 分组分配下拉列表的值 */
         getListBottom(){
-            requestData('GetDeliverTypes',{},'get').then((res)=>{
-				this.deliverTypes = res;
-            },(err)=>{
-                console.log(err)
-            })
+            this.$doRequest("GetDeliverTypes",{} , 'get' , res => {
+                this.deliverTypes = res;
+            });
         },
         /** 删除 */
         deletes(type,index){        //type -- flow-流量 sorts-分组
             if(type=='flow'){
-                this.conditions.splice(index,1);
                 this.matchers.splice(index,1);
             }else{
                 this.tags.splice(index,1);
@@ -254,27 +255,26 @@ export default {
         },
         /** 判断是否冲突 */
         checkConflict(){
-            requestData('CheckConflict',{
-                ...this.jsonData,
-                isUpdate:this.isUpdate
-            },'post').then((res)=>{
+            this.$doRequest("CheckConflict",{ 
+                    ...this.jsonData,
+                    isUpdate:this.isUpdate 
+                } , 'post' , res => {
                 if(res.code==0){        //没有冲突 将hash带到表单提交接口
                     this.submitForm(res.data.hash);
                 }
-            },(err)=>{
-                console.log(err)
-            })
+            });
         },
         /** 最后确认提交表单 */
         submitForm(hash){
-            requestData('AddRule?hash='+hash,{
-                ...this.jsonData,
-                Sort:['']
-            },'post').then((res)=>{
-				console.log(res)
-            },(err)=>{
-                console.log(err)
-            })
+            this.$doRequest("AddRule?hash="+hash, { 
+                ...this.jsonData , 
+                Sort:[''] 
+            } , 'post' , res => {
+                if(res.code==0){
+                    this.$message.success('新增成功！');
+                }
+                this.$emit('reload');
+            });
         },
         /** 查看冲突规则 */
         viewManner(){
@@ -302,7 +302,17 @@ export default {
     watch:{
         index:function(){
             this.changeForm();
-        }
+        },
+        matchers:function(){
+            if(this.matchers.length<5){
+                this.condition_btn = false;
+            }
+        },
+        details:function(){
+            if(this.details){
+                this.enabled = this.details.enabled;
+            }
+        },
     }
 }
 </script>
