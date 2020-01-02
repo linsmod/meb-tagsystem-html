@@ -54,7 +54,7 @@
             </div>
             <!-- 这里判断颜色的条件需要改变 是所有百分比加起来是100%就不能添加了 -->
             <a-button type="link" @click="addSort('flow')" :class="tags.length==5?'gray':''" style="margin-bottom:20px">添加分组</a-button>
-            <div class="conflictTip">
+            <div class="conflictTip" v-if="isConflict">
                 <a-alert message="规则1 和 规则2 覆盖流量有重叠，发生冲突时优先执行规则1" banner class="metion"/>
                 <span class="view" @click="viewManner">点击查看关联规则<a-icon type="right" style="margin-left:5px;"/></span>
             </div>
@@ -77,9 +77,12 @@ export default {
     props:['index','length'],
     data() {
         return {
+            id:0,                   //新增规则id为0 修改规则 id为规则自己的id
+            isUpdate:false,             //检测冲突 新增为false 修改为true
             manner_name:'',         //规则名称
             formLayout: 'inline',
             form: this.$form.createForm(this, { name: 'rules' }),
+            enabled:false,          //是否停用规则
             nowDate:'',         //当前时间
             user:'',         //已分配用户 -- 新建默认为0
             conditions:[],         //筛选条件数组
@@ -89,8 +92,10 @@ export default {
             matchers:[],                //匹配条件
             delivers:[],                   //分配条件
             num:1,              //分组 -- 排序
+            sort:[],                //规则排序
             flows:['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],           //流量百分比
-            tags:[],                    //
+            tags:[],                    
+            isConflict:false,               //是否冲突
             visible:false,               //弹窗
             manner:[                    //弹窗规则数组
                 {
@@ -119,7 +124,19 @@ export default {
         },
         /** 停用按钮 - 确认弹窗 */
         onChange(checked){
-            console.log(`a-switch to ${checked}`);
+            if(this.index==0){      //新增时点停用规则不判断
+                return
+            }else{
+                requestData('EnableRule',{
+                    id:this.id,
+                    enabled:checked
+                },'post').then((res)=>{
+                    console.log(res)
+                },(err)=>{
+                    console.log(err)
+                })
+            }
+            // this.enabled = checked;
         },
         /** 添加条件 */
         addSort(type){
@@ -163,13 +180,13 @@ export default {
                     this.matchers[index].Values = value;
                     break;
                 case 'flow':
-                    this.flowSetNum = Number(this.flowSetNum) + Number(value.slice(0,-1));
+                    this.flowSetNum = Number(this.flowSetNum) + parseInt(value);
                     if(this.flowSetNum > 100){
                         this.$error({ title: '百分比必须等于100%！' });
                     }
                     this.delivers.push({
                         id:0,
-                        Rate:value,
+                        Rate:parseInt(value),
                         TypeId:''
                     })
                     break;
@@ -216,16 +233,48 @@ export default {
                 this.delivers.splice(index,1);
             }
         },
-        /** 提交表单 */
+        /** 第一次提交表单 -- 整合数据 */
         handleSubmit(e) {
             e.preventDefault();
             var that = this;
             this.form.validateFields((err, values) => {
                 if (!err) {
-                    that.manner_name = values;
+                    that.manner_name = values.name;
                 }
             })
-            console.log(this.matchers,this.delivers)
+            this.jsonData = {
+                id:this.id,
+                Name:this.manner_name,
+                Enabled:this.enabled,
+                Matchers:this.matchers,
+                Delivers:this.delivers,
+                Sort:this.sort
+            }
+            this.checkConflict();
+        },
+        /** 判断是否冲突 */
+        checkConflict(){
+            requestData('CheckConflict',{
+                ...this.jsonData,
+                isUpdate:this.isUpdate
+            },'post').then((res)=>{
+                if(res.code==0){        //没有冲突 将hash带到表单提交接口
+                    this.submitForm(res.data.hash);
+                }
+            },(err)=>{
+                console.log(err)
+            })
+        },
+        /** 最后确认提交表单 */
+        submitForm(hash){
+            requestData('AddRule?hash='+hash,{
+                ...this.jsonData,
+                Sort:['']
+            },'post').then((res)=>{
+				console.log(res)
+            },(err)=>{
+                console.log(err)
+            })
         },
         /** 查看冲突规则 */
         viewManner(){

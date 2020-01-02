@@ -10,6 +10,7 @@ function requestData(url,data,method){
             data: data,
             // headers: {'Authorization': token},      //请求头加token验证 -- 这一期先不做
             dataType: "json",
+            contentType: "application/json;charset=utf-8",
             success: function(data){
                 // if(data.status==403){   //token过期
                 //     Vues.$message.error('token过期，请重新登录！');
