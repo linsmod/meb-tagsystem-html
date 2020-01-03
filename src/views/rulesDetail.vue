@@ -17,14 +17,15 @@
             <div class="chooseBox chooseBox1" v-for="(item,index) in matchers" :key="index">
             <!-- 左侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select showSearch optionFilterProp="children" @change="handleSelectChange('types',$event,index)" style="width:300px;">
+                    <!-- 给select绑定value 即编辑时的表单返回的值 -->
+                    <a-select showSearch optionFilterProp="children" :value='item.TypeId' @change="handleSelectChange('types',$event,index)" style="width:300px;">
                         <a-select-option v-for="(item_1,index_1) in matchTypes" :key="index_1" :value="item_1.id">{{item_1.name}}</a-select-option>
                     </a-select>
                 </a-form-item>
             <!-- 右侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select mode="tags" style="width: 300px" @change="handleSelectChange('values',$event,index)">
-                        <a-select-option v-for="(item_2,index_2) in matchValues" :key="index_2" :value="item_2.key">{{item_2.val}}</a-select-option>
+                    <a-select mode="tags" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
+                        <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :value="item_2.key">{{item_2.val}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <a-button type="link" style="color:red;" @click="deletes('flow',index)">删除</a-button>
@@ -35,7 +36,7 @@
             <div class="chooseBox chooseBox2" v-for="(item,index_total) in tags" :key="'total'+index_total">
                 <span class="sort-span sortNum">{{index_total+1}}</span>
                 <a-form-item :wrapper-col="{ span: 4 }" style="margin-left:10px;">
-                    <a-select style="width: 80px" @change="handleSelectChange('flow',$event,index_total)"  @dropdownVisibleChange="(open)=> handleDropdown('flow',index_total,open)" >
+                    <a-select style="width: 80px" :value="item.Rate==0?'':(item.Rate+'%')" @change="handleSelectChange('flow',$event,index_total)"  @dropdownVisibleChange="(open)=> handleDropdown('flow',index_total,open)" >
                         <a-select-option v-for="(_item,index) in item.scope" :key="'num'+index" :value="_item">{{_item}}</a-select-option>
                     </a-select>
                 </a-form-item>
@@ -44,7 +45,7 @@
             <!-- 分组分配数组 -->
                 <div class="chooseBox chooseBox1">
                     <a-form-item :wrapper-col="{ span: 12 }" style="margin-left:15px;">
-                        <a-select showSearch optionFilterProp="children" @change="handleSelectChange('sort',$event,index_total)" style="width:200px;">
+                        <a-select showSearch optionFilterProp="children" :value="item.TypeId" @change="handleSelectChange('sort',$event,index_total)" style="width:200px;">
                             <a-select-option v-for="(item_1,index) in deliverTypes" :key="'total'+index" :value="item_1.id">{{item_1.name}}</a-select-option>
                         </a-select>
                     </a-form-item>
@@ -83,10 +84,9 @@ export default {
             enabled:false,
             condition_btn:false,             //添加条件 - 按钮权限
             matchTypes:[],          //左侧下拉列表 - 匹配类型
-            matchValues:[],         //右侧下拉列表 - 匹配值     -- 与左侧为联动关系
             deliverTypes:[],           // 分配类型
             matchers:[],                //匹配条件
-            delivers:[],                   //分配条件
+            // delivers:[],                   //分配条件
             num:1,              //分组 -- 排序
             sort:[],                //规则排序
             flows:['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],           //流量百分比
@@ -109,16 +109,17 @@ export default {
     },
     mounted(){
         this.changeForm();
-        // console.log(this.rules)
+        this.getListLeft();
     },
     methods:{
         /** 切换规则时 对应修改表单展示 */
         changeForm(){
             /** 改变规则名称 */
             this.form.setFieldsValue({
-                // name: this.index==0 ? ('规则' + this.length) : ( this.rules ? this.rules[this.index].name : (('规则' + (this.index + 1)))),
                 name:this.rules ? this.rules[this.index].name : (('规则' + (this.index + 1)))
             });
+            this.matchers = [];     //如果为新增 清空之前获取到的details
+            this.tags = [];
         },
         /** 停用按钮 - 确认弹窗 */
         onChange(checked){
@@ -142,7 +143,8 @@ export default {
                     this.matchers.push({
                         id:this.rules[this.index].id,
                         TypeId:'',
-                        Values:[]
+                        Values:[],
+                        rightList:[]
                     })
                     if(this.matchTypes.length==0){     //如果已经请求到 不重复请求
                         this.getListLeft();             //获取接口数据
@@ -153,16 +155,19 @@ export default {
                     }
                     break;
                 case 'flow':
-                    this.tags.push({             //****** */
-                        scope:JSON.parse(JSON.stringify(this.flows)),
-                        value:0 
-                    });
-                    this.delivers.push({
+                    this.tags.push({
                         id:this.rules[this.index].id,
-                        Rate:'',
-                        TypeId:''
-                    })
-                    if(this.deliverTypes.length==0){
+                        scope:JSON.parse(JSON.stringify(this.flows)),
+                        value:0,
+                        TypeId:'',
+                        Rate:''
+                    });
+                    // this.delivers.push({
+                    //     id:this.rules[this.index].id,
+                    //     Rate:'',
+                    //     TypeId:''
+                    // })
+                    if(this.deliverTypes.length==0){     //如果已经请求到 不重复请求
                         this.getListBottom();
                     }
                     break;
@@ -185,7 +190,8 @@ export default {
         handleSelectChange(type,value,index) {
             switch (type) {
                 case 'types':
-                    this.getListRight(value);
+                    this.matchers[index].Values = [];
+                    this.handleDropdownRight(value,index,true);
                     for(let i = 0; i < this.matchers.length; i++){
                         if(this.matchers[i].TypeId == value){
                             this.$error({title:'不能重复选择！'});
@@ -197,11 +203,13 @@ export default {
                     this.matchers[index].Values = value;
                     break;
                 case 'flow':
+                    this.tags[index].Rate = parseInt(value);
                     this.tags[index].value = parseInt(value);
-                    this.delivers[index].Rate = parseInt(value);
+                    // this.delivers[index].Rate = parseInt(value);
                     break;
                 case 'sort':
-                    this.delivers[index].TypeId = value;
+                    // this.delivers[index].TypeId = value;
+                    this.tags[index].TypeId = value;
                     break;
                 default:
                     break;
@@ -214,10 +222,12 @@ export default {
             });
         },
         /** 右侧下拉列表的值 -- 与左侧为联动关系 */
-        getListRight(id){
-            this.$doRequest("GetMatchValues",{ id:id } , 'get' , res => {
-                this.matchValues = res;
-            });
+        handleDropdownRight(typeId,index,open){  //根据 左边的id  重新更新可选列表
+            if(open && typeId){
+                this.$doRequest("GetMatchValues",{ id:typeId } , 'get' , res => {
+                    this.matchers[index].rightList = res;
+                });
+            }
         },
         /** 分组分配下拉列表的值 */
         getListBottom(){
@@ -231,7 +241,7 @@ export default {
                 this.matchers.splice(index,1);
             }else{
                 this.tags.splice(index,1);
-                this.delivers.splice(index,1);
+                // this.delivers.splice(index,1);
             }
         },
         /** 第一次提交表单 -- 整合数据 */
@@ -244,11 +254,11 @@ export default {
                 }
             })
             this.jsonData = {
-                id:this.id,
+                id:this.rules[this.index].id,
                 Name:this.manner_name,
                 Enabled:this.enabled,
                 Matchers:this.matchers,
-                Delivers:this.delivers,
+                Delivers:this.tags,
                 Sort:this.sort
             }
             this.checkConflict();
@@ -266,14 +276,23 @@ export default {
         },
         /** 最后确认提交表单 */
         submitForm(hash){
-            this.$doRequest("AddRule?hash="+hash, { 
+            var url_ = '';
+            if(this.rules[this.index].id==0){       //新增
+                url_ = "AddRule?hash="+hash
+            }else{
+                url_ = "UpdateRule?hash="+hash
+            }
+            this.$doRequest(url_, { 
                 ...this.jsonData , 
                 Sort:[''] 
             } , 'post' , res => {
                 if(res.code==0){
-                    this.$message.success('新增成功！');
+                    if(this.rules[this.index].id==0){       //新增
+                        this.$message.success('新增成功！');
+                    }else{
+                        this.$message.success('修改成功！');
+                    }
                 }
-                this.$emit('reload');
             });
         },
         /** 查看冲突规则 */
@@ -309,8 +328,30 @@ export default {
             }
         },
         details:function(){
-            if(this.details){
+            if(JSON.stringify(this.details)!=='{}'){
                 this.enabled = this.details.enabled;
+                this.matchers = [];         //切换tab时初始化，防止重复添加
+                this.tags = [];
+                this.details.matches.map((item,idx)=>{
+                    let itemObj = {
+                        id:item.id,
+                        TypeId:item.typeId,
+                        Values:JSON.parse(item.values),
+                        rightList:[]
+                    };
+                    this.matchers.push(itemObj);
+                    this.handleDropdownRight(item.typeId,this.matchers.length-1,true);
+                });
+                this.details.delivers.map((item_2,idx_2)=>{
+                    let itemObj_2 = {
+                        scope:JSON.parse(JSON.stringify(this.flows)),
+                        value:item_2.rate,
+                        TypeId:item_2.typeId,
+                        Rate:item_2.rate,
+                    };
+                    this.tags.push(itemObj_2);
+                    this.getListBottom();
+                })
             }
         },
     }
@@ -336,6 +377,7 @@ export default {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
+        padding-left: 2.5%;
     }
     .container .chooseBox2 .sort-span{
         margin-top: 8px;
