@@ -9,7 +9,7 @@
 					</ul>
 				</a-col>
 				<a-col :span="19" class="col-right">
-					<RulesDetail :index="isActive" :length="rules.length" :rules="rules" :details="details" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
+					<RulesDetail :index="isActive" :length="rules.length" :rules="rules" :details="details" @refresh="refresh" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
 					<div v-else class="noRule">暂无规则，请先添加规则！</div>
 				</a-col>
 			</a-row>
@@ -80,7 +80,11 @@ export default {
 				}
             });
         },
-
+		/** 每次请求接口后刷新页面要做的事 */
+		refresh(){
+			this.isActive = 0;
+			this.getList();
+		}
 	}
 };
 </script>

@@ -120,19 +120,12 @@ export default {
             this.matchers = [];     //如果为新增 清空之前获取到的details
             this.tags = [];
         },
-        /** 停用按钮 - 确认弹窗 */
+        /** 停用按钮 - 只是个页面样式 */
         onChange(checked){
             if(this.rules[this.index].id == 0){       //如果是新增 则停用按钮不起作用
                 return
             }else{
-                this.$doRequest("Rules/EnableRule",{
-                    id:this.rules[this.index].id,
-                    enable:!checked
-                } , 'post' , res => {
-                    if(res.code==0){
-                       this.enabled = checked;
-                    }
-                });
+                this.enabled = checked;             //先给页面样式 如果不点保存 则不生效 点击保存时 同时请求表单提交接口和按钮接口
             }
         },
         /** 添加条件 */
@@ -295,10 +288,23 @@ export default {
             } , 'post' , res => {
                 if(res.code==0){
                     if(this.rules[this.index].id==0){       //新增
+                        this.startManner();
                         this.$message.success('新增成功！');
                     }else{
                         this.$message.success('修改成功！');
                     }
+                    this.$emit('refresh');
+                }
+            });
+        },
+        /** 启用规则按钮 接口 */
+        startManner(){
+            this.$doRequest("Rules/EnableRule",{
+                id:this.rules[this.index].id,
+                enable:this.enabled
+            } , 'post' , res => {
+                if(res.code==0){
+                    console.log(res.msg)
                 }
             });
         },
