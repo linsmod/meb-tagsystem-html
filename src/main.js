@@ -13,7 +13,7 @@ Vue.config.productionTip = true;
 Vue.prototype.$baseURI = "http://120.26.67.183:8046/api";
 Vue.prototype.$baseURI = "https://dh.meb.com:8055/api";
 Vue.prototype.$baseURI = "http://localhost:62960/api";
-Vue.prototype.valueSorter = function(a, b) {
+Vue.prototype.valueSorter = function (a, b) {
   // var l = a || "";
   // var r = a || "";
   // if (
@@ -25,7 +25,7 @@ Vue.prototype.valueSorter = function(a, b) {
   // debugger;
   return this.asNum(a) - this.asNum(b);
 };
-Vue.prototype.asNum = function(a) {
+Vue.prototype.asNum = function (a) {
   if (a == null || a === "") a = 0;
   var m1 = /,(\d+)/.exec(a) || /(\d+)/.exec(a);
   if (!m1) m1 = 0;
@@ -36,22 +36,22 @@ Vue.prototype.asNum = function(a) {
 };
 Vue.prototype.groupBy = function groupBy(array, f) {
   let groups = {};
-  array.forEach(function(o) {
+  array.forEach(function (o) {
     let group = f(o);
     groups[group] = groups[group] || [];
     groups[group].push(o);
   });
   //return groups;
-  return Object.keys(groups).map(function(group) {
+  return Object.keys(groups).map(function (group) {
     return groups[group];
   });
 };
 Vue.prototype.$echarts = echarts;
-Vue.prototype.$fixDate = function(val) {
+Vue.prototype.$fixDate = function (val) {
   return val.replace("-", "").replace("-", "");
 };
 
-Vue.prototype.transform = function(array = [], fnName, fnDate, fnValue) {
+Vue.prototype.transform = function (array = [], fnName, fnDate, fnValue) {
   var names = this.distinct(array.map(fnName));
   var dates = this.distinct(array.map(fnDate));
   var output = [];
@@ -67,7 +67,7 @@ Vue.prototype.transform = function(array = [], fnName, fnDate, fnValue) {
   return output;
 };
 
-Vue.prototype.distinct = function(arr) {
+Vue.prototype.distinct = function (arr) {
   let result = [];
   let obj = {};
 
@@ -79,24 +79,28 @@ Vue.prototype.distinct = function(arr) {
   }
   return result;
 };
-Vue.prototype.$getUpdateTime = function(cb) {
+Vue.prototype.$getUpdateTime = function (cb) {
   if (this.$updateTime) {
     cb.call(this, this.$updateTime);
   } else {
-    this.$doRequest("UserLabel/GetUpdateTime", {}, 'get' , d => {
+    this.$doRequest("UserLabel/GetUpdateTime", {}, 'get', d => {
       this.$updateTime = moment(d, "YYYYMMDD").format("YYYY-MM-DD");
       cb.call(this, this.$updateTime);
     });
   }
 };
-Vue.prototype.$doRequest = function(path, param = {}, method, cb) {
+Vue.prototype.$doRequest = function (path, param = {}, method, cb) {
   reqwest({
     url: this.$baseURI + "/" + path,
     method: method,
     data: param,
     type: "json"
   }).then(data => {
-    cb && cb.call(this, data);
+    if (data && data.code && data.code !== 0) {
+      this.$message.error(data.msg || "unknown error.");
+    } else {
+      cb && cb.call(this, data);
+    }
   });
 };
 /* eslint-disable no-new */

@@ -276,6 +276,9 @@ export default {
                 if(res.code==0){        //没有冲突 将hash带到表单提交接口
                     this.submitForm(res.data.hash);
                 }
+                else{
+                    this.$message.error(res.msg);
+                }
             });
         },
         /** 最后确认提交表单 */
