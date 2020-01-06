@@ -36,9 +36,11 @@ export default {
 	methods:{
 		getList(){
 			this.$doRequest("GetRules",{} , 'get' , res => {
-				this.rules = res.data;
-				this.id = this.rules[0].id;
-				this.getDetails();
+				if(res.code==0){
+					this.rules = res.data;
+					this.id = this.rules[0].id;
+					this.getDetails();
+				}
 			});
 		},
 		/** 添加规则 */
@@ -68,7 +70,7 @@ export default {
         getDetails(index){
             this.$doRequest("GetDetail",{
                 id:this.id
-            } , 'post' , res => {
+            } , 'get' , res => {
                 if(res.code==0){
 					this.details = res.data;
 				}

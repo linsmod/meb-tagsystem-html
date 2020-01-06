@@ -7,7 +7,7 @@
                 </a-form-item>
                 <div style="margin-right:20px;">
                     <span>停用规则</span>
-                    <a-switch @change="onChange" :checked="enabled"/>
+                    <a-switch @change="onChange" :checked="!enabled"/>
                 </div>
             </div>
 
@@ -86,7 +86,6 @@ export default {
             matchTypes:[],          //左侧下拉列表 - 匹配类型
             deliverTypes:[],           // 分配类型
             matchers:[],                //匹配条件
-            // delivers:[],                   //分配条件
             num:1,              //分组 -- 排序
             sort:[],                //规则排序
             flows:['10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'],           //流量百分比
@@ -128,10 +127,10 @@ export default {
             }else{
                 this.$doRequest("EnableRule",{
                     id:this.rules[this.index].id,
-                    enable:checked
+                    enable:!checked
                 } , 'post' , res => {
                     if(res.code==0){
-                       this.enabled = checked;
+                       this.enabled = !checked;
                     }
                 });
             }
@@ -162,11 +161,6 @@ export default {
                         TypeId:'',
                         Rate:''
                     });
-                    // this.delivers.push({
-                    //     id:this.rules[this.index].id,
-                    //     Rate:'',
-                    //     TypeId:''
-                    // })
                     if(this.deliverTypes.length==0){     //如果已经请求到 不重复请求
                         this.getListBottom();
                     }
@@ -205,10 +199,8 @@ export default {
                 case 'flow':
                     this.tags[index].Rate = parseInt(value);
                     this.tags[index].value = parseInt(value);
-                    // this.delivers[index].Rate = parseInt(value);
                     break;
                 case 'sort':
-                    // this.delivers[index].TypeId = value;
                     this.tags[index].TypeId = value;
                     break;
                 default:
@@ -218,21 +210,27 @@ export default {
         /** 获取满足条件流量  左侧下拉列表的值 */
         getListLeft(){
             this.$doRequest("GetMatchTypes",{} , 'get' , res => {
-                this.matchTypes = res;
+                if(res.code==0){
+                    this.matchTypes = res;
+                }
             });
         },
         /** 右侧下拉列表的值 -- 与左侧为联动关系 */
         handleDropdownRight(typeId,index,open){  //根据 左边的id  重新更新可选列表
             if(open && typeId){
                 this.$doRequest("GetMatchValues",{ id:typeId } , 'get' , res => {
-                    this.matchers[index].rightList = res;
+                    if(res.code==0){
+                        this.matchers[index].rightList = res;
+                    }
                 });
             }
         },
         /** 分组分配下拉列表的值 */
         getListBottom(){
             this.$doRequest("GetDeliverTypes",{} , 'get' , res => {
-                this.deliverTypes = res;
+                if(res.code==0){
+                    this.deliverTypes = res;
+                }
             });
         },
         /** 删除 */
@@ -241,7 +239,6 @@ export default {
                 this.matchers.splice(index,1);
             }else{
                 this.tags.splice(index,1);
-                // this.delivers.splice(index,1);
             }
         },
         /** 第一次提交表单 -- 整合数据 */
@@ -252,6 +249,13 @@ export default {
                 if (!err) {
                     that.manner_name = values.name;
                 }
+            })
+            this.matchers.map((item,index)=>{
+                delete item.rightList;
+            })
+            this.tags.map((item,index)=>{
+                delete item.scope;
+                delete item.value;
             })
             this.jsonData = {
                 id:this.rules[this.index].id,
