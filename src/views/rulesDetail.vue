@@ -351,6 +351,7 @@ export default {
                 });
                 this.details.delivers.map((item_2,idx_2)=>{
                     let itemObj_2 = {
+                        id:item_2.id,
                         scope:JSON.parse(JSON.stringify(this.flows)),
                         value:item_2.rate,
                         TypeId:item_2.typeId,

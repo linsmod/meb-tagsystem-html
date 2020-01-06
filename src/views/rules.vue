@@ -1,17 +1,19 @@
 <template>
 	<div class="container">
-		<a-row class="row-box">
-      		<a-col :span="5" class="col-left">
-				<ul>
-					<li>规则<a-button type="primary" class="button" @click="addRule">添加规则</a-button></li>
-					<li v-for="(item,index) in rules" :key="index" @click="changeTab(index)" :class="isActive==index?'active':''">{{item.name}}<a-icon type="right" class="icon"/></li>
-				</ul>
-			</a-col>
-			<a-col :span="19" class="col-right">
-				<RulesDetail :index="isActive" :length="rules.length" :rules="rules" :details="details" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
-				<div v-else class="noRule">暂无规则，请先添加规则！</div>
-			</a-col>
-		</a-row>
+		<a-spin :spinning="spinning">
+			<a-row class="row-box">
+				<a-col :span="5" class="col-left">
+					<ul>
+						<li>规则<a-button type="primary" class="button" @click="addRule">添加规则</a-button></li>
+						<li v-for="(item,index) in rules" :key="index" @click="changeTab(index)" :class="isActive==index?'active':''">{{item.name}}<a-icon type="right" class="icon"/></li>
+					</ul>
+				</a-col>
+				<a-col :span="19" class="col-right">
+					<RulesDetail :index="isActive" :length="rules.length" :rules="rules" :details="details" v-if="(rules&&rules.length!=0)||isShow"></RulesDetail>
+					<div v-else class="noRule">暂无规则，请先添加规则！</div>
+				</a-col>
+			</a-row>
+		</a-spin>
 	</div>
 </template>
 
@@ -23,6 +25,7 @@ export default {
 	},
 	data() {
 		return {
+			spinning:true,		//loading
 			rules:[],		//规则列表
 			details:{},			//规则详情
 			isActive:0,			//是否当前选中
@@ -37,6 +40,7 @@ export default {
 		getList(){
 			this.$doRequest("Rules/GetRules",{} , 'get' , res => {
 				if(res.code==0){
+					this.spinning = false;
 					this.rules = res.data;
 					this.id = this.rules[0].id;
 					this.getDetails();
