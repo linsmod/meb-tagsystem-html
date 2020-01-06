@@ -282,9 +282,9 @@ export default {
         submitForm(hash){
             var url_ = '';
             if(this.rules[this.index].id==0){       //新增
-                url_ = "AddRule?hash="+hash
+                url_ = "Rules/AddRule?hash="+hash
             }else{
-                url_ = "UpdateRule?hash="+hash
+                url_ = "Rules/UpdateRule?hash="+hash
             }
             this.$doRequest(url_, { 
                 ...this.jsonData , 
