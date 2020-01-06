@@ -211,7 +211,7 @@ export default {
         getListLeft(){
             this.$doRequest("GetMatchTypes",{} , 'get' , res => {
                 if(res.code==0){
-                    this.matchTypes = res;
+                    this.matchTypes = res.data;
                 }
             });
         },
@@ -220,7 +220,7 @@ export default {
             if(open && typeId){
                 this.$doRequest("GetMatchValues",{ id:typeId } , 'get' , res => {
                     if(res.code==0){
-                        this.matchers[index].rightList = res;
+                        this.matchers[index].rightList = res.data;
                     }
                 });
             }
@@ -229,7 +229,7 @@ export default {
         getListBottom(){
             this.$doRequest("GetDeliverTypes",{} , 'get' , res => {
                 if(res.code==0){
-                    this.deliverTypes = res;
+                    this.deliverTypes = res.data;
                 }
             });
         },
