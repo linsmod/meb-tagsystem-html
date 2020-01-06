@@ -61,7 +61,7 @@ export default {
 	},
 	methods: {
 		getUpdateTime() {
-			this.$doRequest("GetUpdateTime", {},'get', d => {
+			this.$doRequest("UserLabel/GetUpdateTime", {},'get', d => {
 				this.updateTime = moment(d, "YYYYMMDD").format("YYYY-MM-DD");
 				this.spinning = false;
 				this.route("tags");

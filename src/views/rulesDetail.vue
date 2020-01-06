@@ -125,7 +125,7 @@ export default {
             if(this.rules[this.index].id == 0){       //如果是新增 则停用按钮不起作用
                 return
             }else{
-                this.$doRequest("EnableRule",{
+                this.$doRequest("Rules/EnableRule",{
                     id:this.rules[this.index].id,
                     enable:!checked
                 } , 'post' , res => {
@@ -209,7 +209,7 @@ export default {
         },
         /** 获取满足条件流量  左侧下拉列表的值 */
         getListLeft(){
-            this.$doRequest("GetMatchTypes",{} , 'get' , res => {
+            this.$doRequest("Rules/GetMatchTypes",{} , 'get' , res => {
                 if(res.code==0){
                     this.matchTypes = res.data;
                 }
@@ -218,7 +218,7 @@ export default {
         /** 右侧下拉列表的值 -- 与左侧为联动关系 */
         handleDropdownRight(typeId,index,open){  //根据 左边的id  重新更新可选列表
             if(open && typeId){
-                this.$doRequest("GetMatchValues",{ id:typeId } , 'get' , res => {
+                this.$doRequest("Rules/GetMatchValues",{ id:typeId } , 'get' , res => {
                     if(res.code==0){
                         this.matchers[index].rightList = res.data;
                     }
@@ -227,7 +227,7 @@ export default {
         },
         /** 分组分配下拉列表的值 */
         getListBottom(){
-            this.$doRequest("GetDeliverTypes",{} , 'get' , res => {
+            this.$doRequest("Rules/GetDeliverTypes",{} , 'get' , res => {
                 if(res.code==0){
                     this.deliverTypes = res.data;
                 }
@@ -269,7 +269,7 @@ export default {
         },
         /** 判断是否冲突 */
         checkConflict(){
-            this.$doRequest("CheckConflict",{ 
+            this.$doRequest("Rules/CheckConflict",{ 
                     ...this.jsonData,
                     isUpdate:this.isUpdate 
                 } , 'post' , res => {

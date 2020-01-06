@@ -74,7 +74,7 @@ export default {
         p.page = this.pagenation.page;
         p.size = this.pagenation.size;
       }
-      this.$doRequest("GetUserLabelData", p,'get', d => {
+      this.$doRequest("UserLabels/GetUserLabelData", p,'get', d => {
         this.loading = false;
         //debugger;
         d.dateRange = this.dateRange;
@@ -83,11 +83,11 @@ export default {
     },
 
     getNumberOfUsers(param = {}, cb) {
-      this.$doRequest("GetNumberOfUsers", param,method, cb);
+      this.$doRequest("UserLabels/GetNumberOfUsers", param,method, cb);
     },
     fetch(params = {}) {
       this.loading = true;
-      this.$doRequest("GetLabels", params,method, data => {
+      this.$doRequest("UserLabels/GetLabels", params,method, data => {
         this.loading = false;
         var d = {};
         data.forEach(function(x) {

@@ -35,7 +35,7 @@ export default {
 	},
 	methods:{
 		getList(){
-			this.$doRequest("GetRules",{} , 'get' , res => {
+			this.$doRequest("Rules/GetRules",{} , 'get' , res => {
 				if(res.code==0){
 					this.rules = res.data;
 					this.id = this.rules[0].id;
@@ -68,7 +68,7 @@ export default {
 		},
         /** 获取规则详情 */
         getDetails(index){
-            this.$doRequest("GetDetail",{
+            this.$doRequest("Rules/GetDetail",{
                 id:this.id
             } , 'get' , res => {
                 if(res.code==0){

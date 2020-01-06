@@ -92,7 +92,7 @@ export default {
     },
     getLabels(cb) {
       //1、下载标签的定义信息
-      this.$doRequest("GetLabels", {},'get', d => {
+      this.$doRequest("UserLabel/GetLabels", {},'get', d => {
         this.labelDefs = d;
         window.labelDefs = d;
         this.options = d
@@ -139,7 +139,7 @@ export default {
     doSearch() {
       this.tableLoading = true;
       this.$doRequest(
-        "SearchUserLabel",
+        "UserLabel/SearchUserLabel",
         {
           user: this.user,
           labels: this.labelString(),

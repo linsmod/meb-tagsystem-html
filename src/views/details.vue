@@ -181,7 +181,7 @@ export default {
           maskColor: "rgba(255, 255, 255, 0.9"
         });
       this.$doRequest(
-        "GetUserDetail",
+        "UserLabel/GetUserDetail",
         {
           dayOffset: -30,
           user: this.$route.query.user,
