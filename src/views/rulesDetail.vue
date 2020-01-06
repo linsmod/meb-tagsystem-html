@@ -6,8 +6,8 @@
                     <a-input v-decorator="['name', { rules: [{ required: true, message: '请输入规则名称!' }] }]"/>
                 </a-form-item>
                 <div style="margin-right:20px;">
-                    <span>停用规则</span>
-                    <a-switch @change="onChange" :checked="!enabled"/>
+                    <span>启用规则</span>
+                    <a-switch @change="onChange" :checked="enabled"/>
                 </div>
             </div>
 
@@ -130,7 +130,7 @@ export default {
                     enable:!checked
                 } , 'post' , res => {
                     if(res.code==0){
-                       this.enabled = !checked;
+                       this.enabled = checked;
                     }
                 });
             }
@@ -211,7 +211,7 @@ export default {
         getListLeft(){
             this.$doRequest("GetMatchTypes",{} , 'get' , res => {
                 if(res.code==0){
-                    this.matchTypes = res;
+                    this.matchTypes = res.data;
                 }
             });
         },
@@ -220,7 +220,7 @@ export default {
             if(open && typeId){
                 this.$doRequest("GetMatchValues",{ id:typeId } , 'get' , res => {
                     if(res.code==0){
-                        this.matchers[index].rightList = res;
+                        this.matchers[index].rightList = res.data;
                     }
                 });
             }
@@ -229,7 +229,7 @@ export default {
         getListBottom(){
             this.$doRequest("GetDeliverTypes",{} , 'get' , res => {
                 if(res.code==0){
-                    this.deliverTypes = res;
+                    this.deliverTypes = res.data;
                 }
             });
         },
