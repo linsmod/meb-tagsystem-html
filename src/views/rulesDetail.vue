@@ -268,6 +268,7 @@ export default {
                 } , 'post' , res => {
                 if(res.code==0){        //没有冲突 将hash带到表单提交接口
                     this.submitForm(res.data.hash);
+                    this.startManner();
                 }
                 else{
                     this.$message.error(res.msg);
@@ -288,7 +289,6 @@ export default {
             } , 'post' , res => {
                 if(res.code==0){
                     if(this.rules[this.index].id==0){       //新增
-                        this.startManner();
                         this.$message.success('新增成功！');
                     }else{
                         this.$message.success('修改成功！');

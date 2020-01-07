@@ -82,7 +82,7 @@ export default {
       });
     },
 
-    getNumberOfUsers(param = {}, cb) {
+    getNumberOfUsers(param = {},method, cb) {
       this.$doRequest("UserLabels/GetNumberOfUsers", param,method, cb);
     },
     fetch(params = {}) {
@@ -131,6 +131,7 @@ export default {
       if (item) {
         this.getNumberOfUsers(
           { field: item.field, date: this.$fixDate(this.updateTime) },
+          'get',
           d => {
             var x = this.current.updateTime;
             this.current = item;
