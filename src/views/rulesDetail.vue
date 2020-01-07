@@ -56,15 +56,15 @@
             <a-button type="link" @click="addSort('flow')" style="margin-bottom:20px">添加分组</a-button>
             
             <div class="conflictTip" v-if="isConflict">
-                <a-alert message="规则1 和 规则2 覆盖流量有重叠，发生冲突时优先执行规则1" banner class="metion"/>
+                <a-alert :message='curMessage' banner class="metion"/>
                 <span class="view" @click="viewManner">点击查看关联规则<a-icon type="right" style="margin-left:5px;"/></span>
             </div>
             <a-form-item :wrapper-col="{ span: 12 }">
                 <a-button type="primary" html-type="submit"> 保存 </a-button>
             </a-form-item>
         </a-form>
-        <a-modal title="关联规则" v-model="visible" @ok="handleOk" class="popup">
-            <p>规则1和以下规则覆盖流量有重叠，请确认执行顺序</p>
+        <a-modal title="关联规则" v-model="visible" @ok="handleOk" class="popup" :maskClosable='false'>
+            <p>{{curMessage}}</p>
             <ul>
                 <li v-for="(item,index) in manner" :key="index"><span>{{index+1}}</span><span>{{item.name}}</span><a-icon class="arrow arrup" type="arrow-up" v-if="index!=0" @click="arrowClick('up',index)"/><a-icon class="arrow arrdw" type="arrow-down" v-if="index!=manner.length-1" @click="arrowClick('down',index)"/></li>
             </ul>
@@ -92,17 +92,9 @@ export default {
             tags:[],                    
             isConflict:false,               //是否冲突
             visible:false,               //弹窗
-            manner:[                    //弹窗规则数组
-                {
-                    name:'规则1'
-                },                   //弹窗规则数组
-                {
-                    name:'规则2'
-                },                   //弹窗规则数组
-                {
-                    name:'规则3'
-                },
-            ],
+            curMessage:'',                 //
+            manner:[],                  //弹窗规则数组
+            arr:[],                     //暂存总的规则数组
             flowSetNum:'',               //分组分配流量
         }
     },
@@ -250,6 +242,7 @@ export default {
                 delete item.scope;
                 delete item.value;
             })
+            this.sort = this.arr;
             this.jsonData = {
                 id:this.rules[this.index].id,
                 Name:this.manner_name,
@@ -267,8 +260,22 @@ export default {
                     isUpdate:this.isUpdate 
                 } , 'post' , res => {
                 if(res.code==0){        //没有冲突 将hash带到表单提交接口
-                    this.submitForm(res.data.hash);
-                    this.startManner();
+                    if(res.data.conflicts==[]&&res.data.conflicts.length==0){
+                        this.submitForm(res.data.hash);
+                        this.startManner();
+                    }else{
+                        this.curMessage = this.manner_name + '和以下规则覆盖流量有重叠，请确认执行顺序';
+                        this.isConflict = true;
+                        this.rules.map((item,index)=>{
+                            this.arr.push(item.id);
+                            res.data.conflicts.map((i,idx)=>{
+                                if(item.id==i){
+                                    this.arr[index]=null;
+                                    this.manner.push(item);
+                                }
+                            })
+                        })
+                    }
                 }
                 else{
                     this.$message.error(res.msg);
@@ -317,10 +324,10 @@ export default {
         arrowClick(type,index){
             switch (type) {
                 case 'up':
-                    console.log('向上排名',index);
+                    this.manner.splice(index-1,1,...this.manner.splice(index, 1 , this.manner[index-1]));
                     break;
                 case 'down':
-                    console.log('向下排名',index);
+                    this.manner.splice(index+1,1,...this.manner.splice(index, 1 , this.manner[index+1]));
                     break;
                 default:
                     break;
@@ -328,6 +335,12 @@ export default {
         },
         /** 弹窗确定事件 */
         handleOk(e){
+            this.manner.map((item,index)=>{
+                let i = this.arr.indexOf(null);
+                if(i!==-1){
+                    this.arr[i]=item.id;
+                }
+            })
             this.visible = false;
         },
     },
@@ -411,6 +424,7 @@ export default {
     }
     .container .conflictTip{
         position: relative;
+        margin-bottom: 20px;
     }
     .container .conflictTip .metion{
         width: 60%;
