@@ -96,6 +96,7 @@ export default {
             manner:[],                  //弹窗规则数组
             arr:[],                     //暂存总的规则数组
             flowSetNum:'',               //分组分配流量
+            isDeal:false,                   //是否已经处理了冲突
         }
     },
     mounted(){
@@ -255,12 +256,17 @@ export default {
         },
         /** 判断是否冲突 */
         checkConflict(){
+            if(this.rules[this.index].id==0){       //新增
+                this.isUpdate = false;
+            }else{
+                this.isUpdate = true;
+            }
             this.$doRequest("Rules/CheckConflict",{ 
                     ...this.jsonData,
                     isUpdate:this.isUpdate 
                 } , 'post' , res => {
-                if(res.code==0){        //没有冲突 将hash带到表单提交接口
-                    if(res.data.conflicts==[]&&res.data.conflicts.length==0){
+                if(res.code==0){        //没有冲突或者冲突已经解决 将hash带到表单提交接口
+                    if((res.data.conflicts==[]&&res.data.conflicts.length==0)||this.isDeal){
                         this.submitForm(res.data.hash);
                         this.startManner();
                     }else{
@@ -341,6 +347,7 @@ export default {
                     this.arr[i]=item.id;
                 }
             })
+            this.isDeal = true;
             this.visible = false;
         },
     },
