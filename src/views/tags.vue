@@ -82,12 +82,12 @@ export default {
       });
     },
 
-    getNumberOfUsers(param = {},method, cb) {
-      this.$doRequest("UserLabels/GetNumberOfUsers", param,method, cb);
+    getNumberOfUsers(param = {}, cb) {
+      this.$doRequest("UserLabels/GetNumberOfUsers", param,"get", cb);
     },
     fetch(params = {}) {
       this.loading = true;
-      this.$doRequest("UserLabels/GetLabels", params,method, data => {
+      this.$doRequest("UserLabels/GetLabels", params,"get", data => {
         this.loading = false;
         var d = {};
         data.forEach(function(x) {
