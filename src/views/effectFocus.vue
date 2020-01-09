@@ -125,7 +125,7 @@ export default {
                                 type: 'sankey',
                                 data: res.data.nodes,
                                 links: res.data.links,
-                                focusNodeAdjacency: true,
+                                // focusNodeAdjacency: true,
                                 levels: [{
                                     depth: 0,
                                     itemStyle: {
