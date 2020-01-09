@@ -1,17 +1,33 @@
 <template>
     <div class="container">
        <div class="header">
-           <a-select mode="multiple" placeholder="选择渠道" style="width: 200px" @change="handleChange('way',$event)">
-                <a-select-option v-for="(i,index) in ways" :key="index">{{i.name}}</a-select-option>
+            <a-select showSearch placeholder="选择渠道" optionFilterProp="children" style="width: 200px" @change="handleChange" :filterOption="filterOption">
+                <a-select-option v-for="(i,index) in ways" :key="index" :value="i.id">{{i.name}}</a-select-option>
             </a-select>
+            <div class="timepicker">
+                <a-date-picker
+                    style="width:200px"
+                    format="YYYY-MM-DD"
+                    v-model="startValue"
+                    placeholder="请选择开始时间"
+                    @openChange="handleStartOpenChange"
+                    />
+                    <span> - </span>
+                    <a-date-picker
+                    style="width:200px"
+                    format="YYYY-MM-DD"
+                    placeholder="请选择结束时间"
+                    v-model="endValue"
+                    :open="endOpen"
+                    @openChange="handleEndOpenChange"
+                />
+            </div>
+            <a-button type="primary" @click="search">搜索</a-button>
        </div>
        <div class="content">
-            <div class="timepicker">
-                <a-date-picker :disabledDate="disabledStartDate" showTime format="YYYY-MM-DD HH:mm:ss" v-model="startValue" placeholder="选择录单开始时间" @openChange="handleStartOpenChange" style="margin-right:5px;width: 200px;"/>
-                <a-date-picker :disabledDate="disabledEndDate" showTime format="YYYY-MM-DD HH:mm:ss" placeholder="选择录单结束时间" v-model="endValue" :open="endOpen" @openChange="handleEndOpenChange" style="width: 200px"/>
-            </div>
             <div id="sankey" style="width: 100%;height: 500px;margin-top:20px;"></div>
        </div>
+       
     </div>
 </template>
 
@@ -19,265 +35,180 @@
 export default {
     data() {
         return {
-            ways:[
-                {
-                    name:'官网meb'
-                },
-                {
-                    name:'小程序'
-                },
-                {
-                    name:'地推'
-                },
-            ],
-            startValue: null,
-            endValue: null,
+            ways:[],                //推广渠道 下拉框数组
+            spreadtypeId:'',            //推广类别
+            startValue: null,           //开始时间
+            endValue: null,             //结束时间
             endOpen: false,
-            data_:{
-                links:[
-                    {
-                        source: "Total",
-                        target: "Environment",
-                        value: 0.342284047256003
-                    },
-                    {
-                        source: "Environment",
-                        target: "Land use",
-                        value: 0.32322870366987
-                    },
-                    {
-                        source: "Land use",
-                        target: "Cocoa butter (Organic)",
-                        value: 0.177682517071359
-                    },
-                    {
-                        source: "Land use",
-                        target: "Cocoa mass (Organic)",
-                        value: 0.137241325342711
-                    },
-                    {
-                        source: "Land use",
-                        target: "Cane sugar (Organic)",
-                        value: 0.00296956039863467
-                    },
-                    {
-                        source: "Land use",
-                        target: "Vegetables (Organic)",
-                        value: 0.00100453712203756
-                    },
-                    {
-                        source: "Environment",
-                        target: "Climate change",
-                        value: 0.0112886157414413
-                    },
-                    {
-                        source: "Climate change",
-                        target: "Cocoa butter (Organic)",
-                        value: 0.00676852971933996
-                    },
-                    {
-                        source: "Climate change",
-                        target: "Cocoa mass (Organic)",
-                        value: 0.00394686874786743
-                    },
-                    {
-                        source: "Climate change",
-                        target: "Cane sugar (Organic)",
-                        value: 0.000315972058711838
-                    },
-                    {
-                        source: "Climate change",
-                        target: "Hazelnuts (Organic)",
-                        value: 0.000218969462265292
-                    },
-                    {
-                        source: "Climate change",
-                        target: "Vegetables (Organic)",
-                        value: 0.0000382757532567656
-                    },
-                    {
-                        source: "Environment",
-                        target: "Harmful substances",
-                        value: 0.00604275542495656
-                    },
-                    {
-                        source: "Harmful substances",
-                        target: "Cocoa mass (Organic)",
-                        value: 0.0055125989240741
-                    },
-                    {
-                        source: "Harmful substances",
-                        target: "Cocoa butter (Organic)",
-                        value: 0.000330017607892127
-                    },
-                    {
-                        source: "Harmful substances",
-                        target: "Cane sugar (Organic)",
-                        value: 0.000200138892990337
-                    },
-                    {
-                        source: "Harmful substances",
-                        target: "Hazelnuts (Organic)",
-                        value: 0
-                    },
-                    {
-                        source: "Harmful substances",
-                        target: "Vegetables (Organic)",
-                        value: 0
-                    },
-                ],
-                nodes:[
-                    {
-                        name:'Total'
-                    },
-                    {
-                        name:'Environment'
-                    },
-                    {
-                        name:'Land use'
-                    },
-                    {
-                        name:'Cocoa butter (Organic)'
-                    },
-                    {
-                        name:'Cocoa mass (Organic)'
-                    },
-                    {
-                        name:'Hazelnuts (Organic)'
-                    },
-                    {
-                        name:'Cane sugar (Organic)'
-                    },
-                    {
-                        name:'Vegetables (Organic)'
-                    },
-                    {
-                        name:'Climate change'
-                    },
-                    {
-                        name:'Harmful substances'
-                    },
-                ]
-            }
         }
     },
     mounted(){
-        this.init_sankey();
+        this.getWays();
     },
     methods:{
+        /** 获取推广渠道 */
+        getWays(){
+            this.$doRequest("/rules/GetSpreadTypes",{} , 'get' , res => {
+                if(res.code==0){
+                    this.ways = res.data;
+                }
+            }); 
+        },
+        /** 推广渠道 下拉框change事件 */
+        handleChange(value) {
+            this.spreadtypeId = value;
+        },
+        /** 带筛选的下拉框 */
+        filterOption(input, option) {
+            return (
+                option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
+            );
+        },
+        /** 时间控件相关事件 */
         disabledStartDate(startValue) {
             const endValue = this.endValue;
             if (!startValue || !endValue) {
-            return false;
+                return false;
             }
             return startValue.valueOf() > endValue.valueOf();
         },
         disabledEndDate(endValue) {
             const startValue = this.startValue;
             if (!endValue || !startValue) {
-            return false;
+                return false;
             }
             return startValue.valueOf() >= endValue.valueOf();
         },
         handleStartOpenChange(open) {
             if (!open) {
-            this.endOpen = true;
+                this.endOpen = true;
             }
         },
         handleEndOpenChange(open) {
             this.endOpen = open;
         },
+        /** 搜索时判断 是否筛选项均有值 */
+        search(){
+            if(this.spreadtypeId==''){
+                this.$error({title:'请选择渠道！'});
+            }else if(this.startValue==null&&this.endValue==null){
+                this.$error({title:'请选择时间！'});
+            }else if(this.startValue==null&&this.endValue!=null){
+                this.$error({title:'请选择开始时间！'});
+            }else if(this.startValue!=null&&this.endValue==null){
+                this.$error({title:'请选择结束时间！'});
+            }
+            if(this.spreadtypeId&&this.startValue&&this.endValue){
+                this.init_sankey();
+            }
+        },
         /** 桑吉图 */
         init_sankey(){
             var dom = document.getElementById("sankey");
             var myChart = this.$echarts.init(dom);
-            var app = {},option = null;
+            var app = {},option = null,that = this;
             myChart.showLoading();
-            // myChart.hideLoading();
-            option = {
-                tooltip: {
-                    trigger: 'item',
-                    triggerOn: 'mousemove'
-                },
-                series: [
-                    {
-                        type: 'sankey',
-                        data: this.data_.nodes,
-                        links: this.data_.links,
-                        focusNodeAdjacency: true,
-                        levels: [{
-                            depth: 0,
-                            itemStyle: {
-                                color: '#fbb4ae'
-                            },
-                            lineStyle: {
-                                color: 'source',
-                                opacity: 0.6
+            this.$doRequest("/rules/GetDeliverSankey",{
+                spreadtypeId:this.spreadtypeId,
+                dtFrom:this.startValue.format('YYYY-MM-DD'),
+                dtTo:this.endValue.format('YYYY-MM-DD')
+            } , 'get' , res => {
+                if(res.code==0){
+                    myChart.hideLoading(); 
+                    option = {
+                        tooltip: {
+                            trigger: 'item',
+                            triggerOn: 'mousemove'
+                        },
+                        series: [
+                            {
+                                type: 'sankey',
+                                data: res.data.nodes,
+                                links: res.data.links,
+                                focusNodeAdjacency: true,
+                                levels: [{
+                                    depth: 0,
+                                    itemStyle: {
+                                        color: '#fbb4ae'
+                                    },
+                                    lineStyle: {
+                                        color: 'source',
+                                        opacity: 0.6
+                                    }
+                                }, {
+                                    depth: 1,
+                                    itemStyle: {
+                                        color: '#b3cde3'
+                                    },
+                                    lineStyle: {
+                                        color: 'source',
+                                        opacity: 0.6
+                                    }
+                                }, {
+                                    depth: 2,
+                                    itemStyle: {
+                                        color: '#ccebc5'
+                                    },
+                                    lineStyle: {
+                                        color: 'source',
+                                        opacity: 0.6
+                                    }
+                                }, {
+                                    depth: 3,
+                                    itemStyle: {
+                                        color: '#decbe4'
+                                    },
+                                    lineStyle: {
+                                        color: 'source',
+                                        opacity: 0.6
+                                    }
+                                }],
+                                lineStyle: {
+                                    normal: {
+                                        curveness: 0.5
+                                    }
+                                }
                             }
-                        }, {
-                            depth: 1,
-                            itemStyle: {
-                                color: '#b3cde3'
-                            },
-                            lineStyle: {
-                                color: 'source',
-                                opacity: 0.6
-                            }
-                        }, {
-                            depth: 2,
-                            itemStyle: {
-                                color: '#ccebc5'
-                            },
-                            lineStyle: {
-                                color: 'source',
-                                opacity: 0.6
-                            }
-                        }, {
-                            depth: 3,
-                            itemStyle: {
-                                color: '#decbe4'
-                            },
-                            lineStyle: {
-                                color: 'source',
-                                opacity: 0.6
-                            }
-                        }],
-                        lineStyle: {
-                            normal: {
-                                curveness: 0.5
-                            }
+                        ]
+                    };
+                    that.$nextTick(function() {
+                        if(document.getElementById('sankey')){
+                            var div = document.getElementById("sankey");
+                            div.removeAttribute("_echarts_instance_");
+                            var chart = that.$echarts.init(div, null, {
+                                renderer: 'canvas',
+                                width: 'auto'
+                            });
+                            chart.setOption(option,true);
                         }
-                    }
-                ]
-            };
-            this.$nextTick(function() {
-                if(document.getElementById('sankey')){
-                    var div = document.getElementById("sankey");
-                    div.removeAttribute("_echarts_instance_");
-                    var chart = this.$echarts.init(div, null, {
-                        renderer: 'canvas',
-                        width: 'auto'
-                    });
-                    chart.setOption(option,true);
+                        window.addEventListener("resize", function() {
+                            chart.resize();
+                        });
+                    }) 
                 }
-                window.addEventListener("resize", function() {
-                    chart.resize();
-                });
-            }) 
+            });
         }
     },
     watch: {
-        startValue(val) {
-            console.log('startValue', val);
-        },
-        endValue(val) {
-            console.log('endValue', val);
-        },
+      startValue(val) {
+          this.startValue = val;
+      },
+      endValue(val) {
+          this.endValue = val;
+      },
     },
 }
 </script>
 
 <style>
+    .container .header{
+        display: flex;
+        flex-direction: row;
+    }
+    .container .header .timepicker{
+        margin-left: 20px;
+        margin-right: 20px;
+    }
     .container .content{
         margin-top: 20px;
     }

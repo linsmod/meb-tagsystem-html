@@ -11,7 +11,7 @@
                 </div>
             </div>
 
-            <p class="createNote"><span>规则创建时间 ： {{ rules[index] ? rules[index].createTime : '' }}</span><span>规则更新时间 ： {{ rules[index] ? rules[index].updateTime : '' }}</span><span>已分配用户 ：{{ rules[index] ? rules[index].order : '' }} 人</span></p>
+            <p class="createNote"><span>规则创建时间 ： {{ rules[index] ? rules[index].createTime : '' }}</span><span>规则更新时间 ： {{ rules[index] ? rules[index].updateTime : '' }}</span><span>已分配用户 ：{{ details ? details.usersDelivered : '' }} 人</span></p>
 
             <p class="formTitle">满足下列条件的流量</p>
             <div class="chooseBox chooseBox1" v-for="(item,index) in matchers" :key="index">

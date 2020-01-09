@@ -11,6 +11,8 @@ import moment from "moment";
 Vue.use(Antd);
 Vue.config.productionTip = true;
 Vue.prototype.$baseURI = "https://dh.meb.com:8047/api";
+// Vue.prototype.$baseURI = "https://dh.meb.com:8055/api";
+// Vue.prototype.$baseURI = "http://localhost:62960/api";
 Vue.prototype.valueSorter = function (a, b) {
   // var l = a || "";
   // var r = a || "";
