@@ -63,7 +63,7 @@ export default {
     labelString() {
       return this.fixedLabels
         .concat(this.selectedLabels)
-        .map(x => x.key)
+        .map(x => x.key.split('|')[0])
         .join(",");
     },
     columns() {
@@ -97,9 +97,9 @@ export default {
           //.sort((a, b) => (a.field || "").localeCompare(b.field || ""))
           .map(x => {
             return {
-              value: x.field,
+              value: x.field + '|'+x.name,
               label: x.name,
-              key: x.field
+              key: x.field + '|'+x.name
             };
           });
 
@@ -111,6 +111,7 @@ export default {
       this.doSearch();
     },
     handleChange(value) {
+      debugger;
       this.selectedLabels=value;
       this.doSearch();
     },
