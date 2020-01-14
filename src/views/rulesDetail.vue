@@ -24,7 +24,7 @@
                 </a-form-item>
             <!-- 右侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select mode="tags" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
+                    <a-select mode="multiple" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
                         <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :value="(item_2.key).toString()">{{item_2.val}}</a-select-option>
                     </a-select>
                 </a-form-item>
@@ -102,6 +102,12 @@ export default {
     mounted(){
         this.changeForm();
         this.getListLeft();
+        this.sort = [];             //先清空该数组
+        if(JSON.stringify(this.rules)!='[]'&&this.rules.length!=0){
+            for(let i = 0; i < this.rules.length; i++){
+                this.sort.push(this.rules[i].id);
+            }
+        }
     },
     methods:{
         /** 切换规则时 对应修改表单展示 */
@@ -112,6 +118,7 @@ export default {
             });
             this.matchers = [];     //如果为新增 清空之前获取到的details
             this.tags = [];
+            this.arr = [];
             this.isConflict = false;
             this.isDeal = false;
         },
@@ -245,14 +252,13 @@ export default {
                 delete item.scope;
                 delete item.value;
             })
-            this.sort = this.arr;
             this.jsonData = {
                 id:this.rules[this.index].id,
                 Name:this.manner_name,
                 Enabled:this.rules[this.index].id==0?true:this.enabled,
                 Matchers:this.matchers,
                 Delivers:this.tags,
-                Sort:this.sort
+                Sort:JSON.stringify(this.sort)=='[]'?'[]':this.sort
             }
             if(this.jsonData.Enabled){      //没有启用的规则不用检测冲突
                 this.checkConflict();
@@ -270,7 +276,7 @@ export default {
             }
             this.$doRequest("Rules/CheckConflict",{ 
                     ...this.jsonData,
-                    isUpdate:this.isUpdate 
+                    isUpdate:this.isUpdate
                 } , 'post' , res => {
                 if(res.code==0){        //没有冲突或者冲突已经解决 将hash带到表单提交接口
                     if((JSON.stringify(res.data.conflicts)=='[]'&&res.data.conflicts.length==0)||this.isDeal){
@@ -287,6 +293,7 @@ export default {
                                 }
                             })
                         })
+                        this.sort = this.arr;
                     }
                 }
                 else{
@@ -303,8 +310,7 @@ export default {
                 url_ = "Rules/UpdateRule?hash="+hash
             }
             this.$doRequest(url_, { 
-                ...this.jsonData , 
-                Sort:[''] 
+                ...this.jsonData
             } , 'post' , res => {
                 if(res.code==0){
                     if(this.rules[this.index].id==0){       //新增
@@ -313,6 +319,7 @@ export default {
                         this.$message.success('修改成功！');
                     }
                     this.manner = [];
+                    this.arr = [];
                     this.$emit('refresh');
                 }
             });
