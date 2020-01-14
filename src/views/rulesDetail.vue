@@ -204,29 +204,41 @@ export default {
         },
         /** 获取满足条件流量  左侧下拉列表的值 */
         getListLeft(){
-            this.$doRequest("Rules/GetMatchTypes",{} , 'get' , res => {
-                if(res.code==0){
-                    this.matchTypes = res.data;
-                }
-            });
+            var _this = this;
+            this.$getRuleMatchTypes()
+            .then(res=>_this.matchTypes = res.data);
+
+            // this.$doRequest("Rules/GetMatchTypes",{} , 'get' , res => {
+            //     if(res.code==0){
+            //         this.matchTypes = res.data;
+            //     }
+            // });
         },
         /** 右侧下拉列表的值 -- 与左侧为联动关系 */
         handleDropdownRight(typeId,index,open){  //根据 左边的id  重新更新可选列表
             if(open && typeId){
-                this.$doRequest("Rules/GetMatchValues",{ id:typeId } , 'get' , res => {
-                    if(res.code==0){
-                        this.matchers[index].rightList = res.data;
-                    }
+                this.$getRuleMatchValues(typeId)
+                .then(res=>{
+                    this.matchers[index].rightList = res.data;
                 });
+                // this.$doRequest("Rules/GetMatchValues",{ id:typeId } , 'get' , res => {
+                //     if(res.code==0){
+                //         this.matchers[index].rightList = res.data;
+                //     }
+                // });
             }
         },
         /** 分组分配下拉列表的值 */
         getListBottom(){
-            this.$doRequest("Rules/GetDeliverTypes",{} , 'get' , res => {
-                if(res.code==0){
-                    this.deliverTypes = res.data;
-                }
-            });
+            var _this = this;
+            this.$getRuleDeliverTypes()
+            .then(res=>_this.deliverTypes = res.data);
+
+            // this.$doRequest("Rules/GetDeliverTypes",{} , 'get' , res => {
+            //     if(res.code==0){
+            //         this.deliverTypes = res.data;
+            //     }
+            // });
         },
         /** 删除 */
         deletes(type,index){        //type -- flow-流量 sorts-分组

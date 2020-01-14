@@ -89,6 +89,65 @@ Vue.prototype.$getUpdateTime = function (cb) {
     });
   }
 };
+window.RuleMatchTypes={};
+Vue.prototype.$getRuleMatchTypes=function(){
+  var _this = this;
+  return new Promise((resolve,reject)=>{
+    if(window.RuleMatchTypes && !_this.$IsCacheExpired(window.RuleMatchTypes)){
+      resolve(window.RuleMatchTypes);
+    }
+    else{
+      _this.$doRequest("Rules/GetMatchTypes",{},"get",x=>{
+        x.cache_ts=new Date().getTime();
+        window.RuleMatchTypes=x;
+        resolve(x);
+      });
+    }
+  })
+}
+window.RuleDeliverTypes={};
+Vue.prototype.$getRuleDeliverTypes=function(){
+  var _this = this;
+  return new Promise((resolve,reject)=>{
+    if(window.RuleDeliverTypes && !_this.$IsCacheExpired(window.RuleDeliverTypes)){
+      resolve(window.RuleDeliverTypes);
+    }
+    else{
+      _this.$doRequest("Rules/GetDeliverTypes",{},"get",x=>{
+        x.cache_ts=new Date().getTime();
+        window.RuleDeliverTypes=x;
+        resolve(x);
+      });
+    }
+  })
+}
+Vue.prototype.$IsCacheExpired=function(x){
+    if(!x.cache_ts){
+      return true;
+    }
+    else{
+      return (new Date().getTime()-x.cache_ts)/1000/60 > 1;// min.
+    }
+}
+window.RuleMatchValues={};
+Vue.prototype.$getRuleMatchValues=function(typeId){
+  if(!typeId)
+  debugger;
+  var _this = this;
+  return new Promise((resolve,reject)=>{
+    if(window.RuleMatchValues[typeId] && !_this.$IsCacheExpired(window.RuleMatchValues[typeId])){
+      resolve(window.RuleMatchValues[typeId]);
+    }
+    else{
+      _this.$doRequest("Rules/GetMatchValues",{id:typeId},"get",x=>{
+        x.cache_ts=new Date().getTime();
+        window.RuleMatchValues[typeId]=x;
+        resolve(x);
+      });
+    }
+  })
+}
+
 Vue.prototype.$doRequest = function (path, param = {}, method, cb) {
   reqwest({
     url: this.$baseURI + "/" + path,

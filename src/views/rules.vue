@@ -38,6 +38,7 @@ export default {
 	},
 	methods:{
 		getList(){
+			
 			this.$doRequest("Rules/GetRules",{} , 'get' , res => {
 				if(res.code==0){
 					this.spinning = false;
@@ -46,8 +47,7 @@ export default {
 						this.id = this.rules[0].id;
 						this.getDetails();
 					}
-				}
-			});
+				}});
 		},
 		/** 添加规则 */
 		addRule(){
@@ -78,7 +78,15 @@ export default {
                 id:this.id
             } , 'get' , res => {
                 if(res.code==0){
-					this.details = res.data;
+					var promises = [];
+					for (let index = 0; index < res.data.matches.length; index++) {
+						const typeId = res.data.matches[index].typeId;
+						promises.push(this.$getRuleMatchValues(typeId));
+					}
+					Promise.all(promises)
+					.then(()=>{
+						this.details = res.data;
+					});
 				}
             });
         },
