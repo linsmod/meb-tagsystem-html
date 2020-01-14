@@ -71,7 +71,7 @@ export default {
         return {
           fixed: x.fixed,
           title: x.label,
-          dataIndex: x.key,
+          dataIndex: x.key.split('|')[0],
           sorter: x.fixed
             ? false
             : (a, b) => this.valueSorter(a[x.key], b[x.key]),
