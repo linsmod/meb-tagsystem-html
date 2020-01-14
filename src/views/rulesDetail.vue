@@ -113,6 +113,7 @@ export default {
             this.matchers = [];     //如果为新增 清空之前获取到的details
             this.tags = [];
             this.isConflict = false;
+            this.isDeal = false;
         },
         /** 停用按钮 - 只是个页面样式 */
         onChange(checked){
@@ -245,18 +246,23 @@ export default {
                 delete item.value;
             })
             this.sort = this.arr;
-                this.jsonData = {
-                    id:this.rules[this.index].id,
-                    Name:this.manner_name,
-                    Enabled:this.rules[this.index].id==0?true:this.enabled,
-                    Matchers:this.matchers,
-                    Delivers:this.tags,
-                    Sort:this.sort
-                }
-            this.checkConflict();
+            this.jsonData = {
+                id:this.rules[this.index].id,
+                Name:this.manner_name,
+                Enabled:this.rules[this.index].id==0?true:this.enabled,
+                Matchers:this.matchers,
+                Delivers:this.tags,
+                Sort:this.sort
+            }
+            if(this.jsonData.Enabled){      //没有启用的规则不用检测冲突
+                this.checkConflict();
+            }else{
+                this.submitForm(null);
+            }
         },
         /** 判断是否冲突 */
         checkConflict(){
+            this.manner = [];           //不管是否有冲突 判断之前先将该数组清空
             if(this.rules[this.index].id==0){       //新增
                 this.isUpdate = false;
             }else{
@@ -269,9 +275,6 @@ export default {
                 if(res.code==0){        //没有冲突或者冲突已经解决 将hash带到表单提交接口
                     if((JSON.stringify(res.data.conflicts)=='[]'&&res.data.conflicts.length==0)||this.isDeal){
                         this.submitForm(res.data.hash);
-                        if(this.rules[this.index].id!=0){           //新增时不请求这个接口
-                            this.startManner();
-                        }
                     }else{
                         this.curMessage = this.manner_name + '和以下规则覆盖流量有重叠，请确认执行顺序';
                         this.isConflict = true;
@@ -309,6 +312,7 @@ export default {
                     }else{
                         this.$message.success('修改成功！');
                     }
+                    this.manner = [];
                     this.$emit('refresh');
                 }
             });
