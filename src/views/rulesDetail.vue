@@ -25,7 +25,7 @@
             <!-- 右侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
                     <a-select mode="tags" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
-                        <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :value="item_2.key">{{item_2.val}}</a-select-option>
+                        <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :value="(item_2.key).toString()">{{item_2.val}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <a-button type="link" style="color:red;" @click="deletes('flow',index)">删除</a-button>
@@ -112,6 +112,7 @@ export default {
             });
             this.matchers = [];     //如果为新增 清空之前获取到的details
             this.tags = [];
+            this.isConflict = false;
         },
         /** 停用按钮 - 只是个页面样式 */
         onChange(checked){
@@ -244,14 +245,14 @@ export default {
                 delete item.value;
             })
             this.sort = this.arr;
-            this.jsonData = {
-                id:this.rules[this.index].id,
-                Name:this.manner_name,
-                Enabled:this.enabled,
-                Matchers:this.matchers,
-                Delivers:this.tags,
-                Sort:this.sort
-            }
+                this.jsonData = {
+                    id:this.rules[this.index].id,
+                    Name:this.manner_name,
+                    Enabled:this.rules[this.index].id==0?true:this.enabled,
+                    Matchers:this.matchers,
+                    Delivers:this.tags,
+                    Sort:this.sort
+                }
             this.checkConflict();
         },
         /** 判断是否冲突 */
@@ -266,9 +267,11 @@ export default {
                     isUpdate:this.isUpdate 
                 } , 'post' , res => {
                 if(res.code==0){        //没有冲突或者冲突已经解决 将hash带到表单提交接口
-                    if((res.data.conflicts==[]&&res.data.conflicts.length==0)||this.isDeal){
+                    if((JSON.stringify(res.data.conflicts)=='[]'&&res.data.conflicts.length==0)||this.isDeal){
                         this.submitForm(res.data.hash);
-                        this.startManner();
+                        if(this.rules[this.index].id!=0){           //新增时不请求这个接口
+                            this.startManner();
+                        }
                     }else{
                         this.curMessage = this.manner_name + '和以下规则覆盖流量有重叠，请确认执行顺序';
                         this.isConflict = true;
