@@ -57,7 +57,7 @@ export default {
     };
   },
 	mounted() {
-		// this.getUpdateTime();
+		this.getUpdateTime();
 	},
 	methods: {
 		getUpdateTime() {
