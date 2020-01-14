@@ -41,9 +41,11 @@ export default {
 			this.$doRequest("Rules/GetRules",{} , 'get' , res => {
 				if(res.code==0){
 					this.spinning = false;
-					this.rules = res.data;
-					this.id = this.rules[0].id;
-					this.getDetails();
+					if(res.data!=[]&&res.data.length!=0){
+						this.rules = res.data;
+						this.id = this.rules[0].id;
+						this.getDetails();
+					}
 				}
 			});
 		},
