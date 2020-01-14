@@ -9,12 +9,9 @@
       />
       <a href="#" slot="extra">更新于{{$route.query.updateTime}}</a>
       <a-select
-        mode="tags"
+        mode="multiple"
         style="width: 100%;"
-        @search="onSearch"
         @change="handleChange"
-        @select="handleSelect"
-        @deselect="handleUnselect"
         :labelInValue="true"
         placeholder="选择要显示的标签"
         :value="selectedLabels"
@@ -114,28 +111,32 @@ export default {
       this.doSearch();
     },
     handleChange(value) {
-      //this.doSearch();
-    },
-    handleSelect(value) {
-      this.selectedLabels.push(value);
+      this.selectedLabels=value;
       this.doSearch();
     },
-    handleUnselect(value) {
-      //debugger;
-      for (var i = 0; i < this.selectedLabels.length; i++) {
-        if (this.selectedLabels[i].key === value.key) {
-          this.selectedLabels.splice(i, 1);
-          break;
-        }
-      }
-      // if (this.selectedLabels.length > 0) {
-      //   this.doSearch();
-      // } else {
-      //   this.tableData = [];
-      //   window.tableData = [];
-      //   this.tableLoading = false;
-      // }
-    },
+    // handleSelect(value) {
+    //   var option = this.options.filter(x=>x.label==value);
+    //   if(option.length>0){
+    //     this.selectedLabels.push(value);
+    //     this.doSearch();
+    //   }
+    // },
+    // handleUnselect(value) {
+    //   //debugger;
+    //   for (var i = 0; i < this.selectedLabels.length; i++) {
+    //     if (this.selectedLabels[i].key === value.key) {
+    //       this.selectedLabels.splice(i, 1);
+    //       break;
+    //     }
+    //   }
+    //   // if (this.selectedLabels.length > 0) {
+    //   //   this.doSearch();
+    //   // } else {
+    //   //   this.tableData = [];
+    //   //   window.tableData = [];
+    //   //   this.tableLoading = false;
+    //   // }
+    // },
     doSearch() {
       this.tableLoading = true;
       this.$doRequest(
