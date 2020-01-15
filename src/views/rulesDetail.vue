@@ -24,8 +24,8 @@
                 </a-form-item>
             <!-- 右侧下拉列表 -->
                 <a-form-item :wrapper-col="{ span: 5 }" style="margin-left:30px;">
-                    <a-select mode="multiple" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
-                        <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :labelInValue="true" :value="(item_2.key).toString() || item_2.val">{{item_2.val}}</a-select-option>
+                    <a-select mode="multiple" optionFilterProp="children" style="width: 300px" :value='item.Values' @change="handleSelectChange('values',$event,index)" @dropdownVisibleChange="(open)=> handleDropdownRight(item.TypeId,index,open)">
+                        <a-select-option v-for="(item_2,index_2) in item.rightList" :key="index_2" :value="(item_2.key).toString() || item_2.val">{{item_2.val}}</a-select-option>
                     </a-select>
                 </a-form-item>
                 <a-button type="link" style="color:red;" @click="deletes('flow',index)">删除</a-button>
