@@ -66,7 +66,16 @@
         <a-modal title="关联规则" v-model="visible" @ok="handleOk" class="popup" :maskClosable='false'>
             <p>{{curMessage}}</p>
             <ul>
-                <li v-for="(item,index) in manner" :key="index"><span>{{index+1}}</span><span>{{item.name}}</span><a-icon class="arrow arrup" type="arrow-up" v-if="index!=0" @click="arrowClick('up',index)"/><a-icon class="arrow arrdw" type="arrow-down" v-if="index!=manner.length-1" @click="arrowClick('down',index)"/></li>
+                <li v-for="(item,index) in manner" :key="index">
+                    <span>{{index+1}}</span>
+                    <span style="width:60px;display:inline-block;margin-right:0px;">
+                    <a-icon class="arrow arrup" type="arrow-up" v-if="index!=0" @click="arrowClick('up',index)"/>
+                    <a-icon class="arrow arrdw" type="arrow-down" v-if="index!=manner.length-1" @click="arrowClick('down',index)"/>
+                    </span>
+                    <span style="width:180px;display:inline-block;">{{item.name}}</span>
+                    <span v-if="item.isCurrent">
+                <a-icon  type="check-circle" theme="twoTone" twoToneColor="#52c41a" /> 当前规则</span>
+                </li>
             </ul>
         </a-modal>
     </div>
@@ -294,13 +303,16 @@ export default {
                     if((JSON.stringify(res.data.conflicts)=='[]'&&res.data.conflicts.length==0)||this.isDeal){
                         this.submitForm(res.data.hash);
                     }else{
-                        this.curMessage = this.manner_name + '和以下规则覆盖流量有重叠，请确认执行顺序';
+                        this.curMessage = '当前规则和以下规则覆盖流量有重叠，请确认执行顺序';
                         this.isConflict = true;
                         this.rules.map((item,index)=>{
                             this.arr.push(item.id);
                             res.data.conflicts.map((i,idx)=>{
                                 if(item.id==i){
                                     this.arr[index]=null;
+                                    item.isCurrent = index==this.index;
+                                    if(item.isCurrent)
+                                    item.name= this.manner_name;
                                     this.manner.push(item);
                                 }
                             })
