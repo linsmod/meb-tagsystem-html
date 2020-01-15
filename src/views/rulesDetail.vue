@@ -46,7 +46,7 @@
                 <div class="chooseBox chooseBox1">
                     <a-form-item :wrapper-col="{ span: 12 }" style="margin-left:15px;">
                         <a-select showSearch optionFilterProp="children" :value="item.TypeId" @change="handleSelectChange('sort',$event,index_total)" style="width:200px;">
-                            <a-select-option v-for="(item_1,index) in deliverTypes" :key="'total'+index" :labelInValue="true" :value="item_1.id || item_1.name">{{item_1.name}}</a-select-option>
+                            <a-select-option v-for="(item_1,index) in deliverTypes" :key="'total'+index" :value="item_1.id || item_1.name">{{item_1.name}}</a-select-option>
                         </a-select>
                     </a-form-item>
                     <span class="sort-span sortTxt">分配</span>
