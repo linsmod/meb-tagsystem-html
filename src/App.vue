@@ -61,13 +61,10 @@ export default {
 	},
 	methods: {
 		getUpdateTime() {
-			Promise.all([this.$getRuleMatchTypes(),this.$getRuleDeliverTypes()])
-			.then(()=>{
-				this.$doRequest("UserLabel/GetUpdateTime", {},'get', d => {
+			this.$doRequest("UserLabel/GetUpdateTime", {},'get', d => {
 				this.updateTime = moment(d, "YYYYMMDD").format("YYYY-MM-DD");
 				this.spinning = false;
 				this.route("tags");
-			});
 			});
 		},
 		menu() {
