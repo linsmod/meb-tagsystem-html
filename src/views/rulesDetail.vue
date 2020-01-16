@@ -69,13 +69,13 @@
           <a-button
             type="link"
             style="color:red;"
-            @click="deletes('flow', index)"
+            @click="deletes('matcher', index)"
             >删除</a-button
           >
         </div>
         <a-button
           type="link"
-          @click="addSort('condition')"
+          @click="addSort('matcher')"
           style="margin-bottom:20px"
           :disabled="condition_btn"
           >添加条件</a-button
@@ -126,7 +126,7 @@
             <a-button
               type="link"
               style="color:red;margin-top:2px;"
-              @click="deletes('sorts', index_total)"
+              @click="deletes('deliver', index_total)"
               >删除</a-button
             >
           </div>
@@ -134,7 +134,7 @@
 
         <a-button
           type="link"
-          @click="addSort('flow')"
+          @click="addSort('deliver')"
           style="margin-bottom:20px"
           >添加分组</a-button
         >
@@ -144,47 +144,47 @@
           <span v-if="details.enabled">没有冲突</span
           ><span v-else>规则未启用，冲突检测已关闭</span>
         </p>
-        <div class="popup" v-show="isConflict">
+        <div class="popup" v-show="details.enabled && isConflict">
           <div class="conflictTip">
             <a-alert
-              message="当前规则和以下规则覆盖流量有重叠，请确认或调整执行顺序"
+              message="规则间覆盖流量有重叠，请确认或调整【标红规则】的执行顺序。"
               banner
-              class="metion"
             />
             <br />
             <ul>
-              <li v-for="(item, index) in this.sort" :key="index">
+              <li v-for="(item, index) in rules" :key="index">
                 <span>{{ index + 1 }}</span>
-                <span style="width:60px;display:inline-block;margin-right:0px;">
-                  <a-icon
-                    class="arrow arrup"
-                    type="arrow-up"
-                    v-if="index != 0"
-                    @click="arrowClick('up', index)"
-                  />
-                  <a-icon
-                    class="arrow arrdw"
-                    type="arrow-down"
-                    v-if="index != manner.length - 1"
-                    @click="arrowClick('down', index)"
-                  />
+                <span style="width:60px;margin-right:0px;">
+                  <span style="width:20px;display:inline-block;">
+                    <a-icon
+                      class="arrow arrup"
+                      type="arrow-up"
+                      v-if="index != 0 && conflicts.indexOf(item.id) != -1"
+                      @click="arrowClick('up', index)"
+                  /></span>
+                  <span style="width:20px;display:inline-block;">
+                    <a-icon
+                      class="arrow arrdw"
+                      type="arrow-down"
+                      v-if="
+                        index != rules.length - 1 &&
+                          conflicts.indexOf(item.id) != -1
+                      "
+                      @click="arrowClick('down', index)"
+                  /></span>
                 </span>
-                <span style="width:180px;display:inline-block;">{{
-                  item.name
-                }}</span>
-                <span v-if="item.id == details.id">
-                  <a-icon
-                    type="check-circle"
-                    theme="twoTone"
-                    twoToneColor="#52c41a"
-                  />当前规则
-                </span>
+                <span
+                  style="width:180px;display:inline-block;"
+                  :style="conflicts.indexOf(item.id) != -1 ? 'color:red' : ''"
+                  :class="item.id == details.id ? 'conflict-current' : ''"
+                  >{{ item.name }}</span
+                >
               </li>
             </ul>
           </div>
         </div>
         <p v-if="checking">
-          <a-spin>
+          <a-spin style="padding-right:5px;">
             <a-icon
               slot="indicator"
               type="loading"
@@ -239,8 +239,7 @@ export default {
       cachedValues: [],
       matchers: [], //匹配条件
       num: 1, //分组 -- 排序
-      sort: [], //规则排序
-      flows: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], //流量百分比
+      flows: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], //流量百分比
       tags: [],
       isConflict: false, //是否冲突
       visible: false, //弹窗
@@ -250,6 +249,14 @@ export default {
       detailSpinning: false,
       conflicts: []
     };
+  },
+  computed: {
+    sortedRules() {
+      var x = this.rules
+        .slice()
+        .sort((a, b) => a.index || a.order - b.index || b.order);
+      return x;
+    }
   },
   methods: {
     getMatchValues(typeId) {
@@ -264,6 +271,9 @@ export default {
       return values;
     },
     initialize(details) {
+      this.rules.map(x => {
+        x.index = x.index || x.order;
+      });
       var promises = [];
       promises.push(
         this.$getRuleDeliverTypes().then(x => (this.deliverTypes = x.data))
@@ -294,25 +304,26 @@ export default {
     /** 停用按钮 - 只是个页面样式 */
     onChange(checked) {
       this.details.enabled = checked;
+
       this.checkConflict();
     },
     /** 添加条件 */
     addSort(type) {
       switch (type) {
-        case "condition": //添加满足条件的流量
+        case "matcher": //添加满足条件的流量
           this.details.matches.push({
-            typeId: 0,
-            values: []
+            typeId: null,
+            values: "[]"
           });
           if (this.details.matches.length == 5) {
             this.$error({ title: "最多5个条件！" });
             this.condition_btn = true;
           }
           break;
-        case "flow":
+        case "deliver":
           this.details.delivers.push({
-            value: 0,
-            typeId: 0,
+            values: "[]",
+            typeId: null,
             rate: 0
           });
           break;
@@ -324,12 +335,14 @@ export default {
     handleSelectChange(type, value, index) {
       switch (type) {
         case "matchType": //匹配类型
-          debugger;
           if (this.details.matches[index].typeId == value) {
             return;
           }
-
-          if (this.details.matches.filter(x => x.typeId != value).length > 0) {
+          if (
+            this.details.matches
+              .filter(x => x.typeId != null)
+              .filter(x => x.typeId == value).length > 0
+          ) {
             this.$error({ title: "不能重复选择！" });
             return;
           }
@@ -341,13 +354,12 @@ export default {
             this.cachedValues.push({ typeId: typeId, values: x.data });
             this.details.matches[index].typeId = typeId;
             this.details.matches[index].values = "[]";
+            this.checkConflict();
           });
           break;
         case "matchValue": //匹配的值
           this.details.matches[index].values = JSON.stringify(value);
-          if (value.length > 0) {
-            this.checkConflict();
-          }
+          this.checkConflict();
           break;
         case "deliverType": //分配类型
           this.details.delivers[index].typeId = value;
@@ -359,36 +371,19 @@ export default {
           break;
       }
     },
-    /** 获取满足条件流量  左侧下拉列表的值 */
-    getListLeft() {
-      var _this = this;
-      this.$getRuleMatchTypes().then(res => (_this.matchTypes = res.data));
-
-      // this.$doRequest("Rules/GetMatchTypes",{} , 'get' , res => {
-      //     if(res.code==0){
-      //         this.matchTypes = res.data;
-      //     }
-      // });
-    },
+    
     /** 删除 */
     deletes(type, index) {
-      //type -- flow-流量 sorts-分组
-      if (type == "flow") {
-        this.matchers.splice(index, 1);
+      if (type == "matcher") {
+        this.details.matches.splice(index, 1);
+        this.checkConflict();
       } else {
-        this.tags.splice(index, 1);
+        this.details.delivers.splice(index, 1);
       }
     },
-    /** 第一次提交表单 -- 整合数据 */
     handleSubmit(e) {
       e.preventDefault();
       this.submitForm(this.details.enabled ? this.hash : null);
-    },
-
-    buildSortingList(conflicts) {
-      this.sort = this.rules
-        .filter(x => conflicts.indexOf(conflicts) > -1)
-        .sort((a, b) => a.order - b.order);
     },
 
     buildFormData() {
@@ -413,7 +408,7 @@ export default {
         enabled: this.details.enabled,
         matchers: matchers,
         delivers: delivers,
-        sort: this.rules.map(x => x.id)
+        sort: this.rules.sort((a, b) => a.index - b.index).map(x => x.id)
       };
     },
     cancelAdd() {
@@ -421,7 +416,10 @@ export default {
     },
     /** 判断是否冲突 */
     checkConflict() {
+      this.conflicts = [];
+      this.isConflict = false;
       if (!this.details.enabled) return;
+      this.hash = null;
       this.checking = true;
       this.$doRequest(
         "Rules/CheckConflict",
@@ -431,8 +429,9 @@ export default {
           if (res.code == 0) {
             this.hash = res.data.hash;
             this.conflicts = res.data.conflicts;
-            if (this.conflicts.length > 1)
-              this.buildSortingList(res.data.conflicts);
+            if (this.conflicts.length > 1) {
+              this.isConflict = true;
+            }
             this.checking = false;
           } else {
             this.$message.error(res.msg);
@@ -484,24 +483,28 @@ export default {
     },
     /** 箭头点击事件 */
     arrowClick(type, index) {
+      var rule = this.rules[index];
       switch (type) {
         case "up":
-          this.manner.splice(
+          this.rules.splice(
             index - 1,
             1,
-            ...this.manner.splice(index, 1, this.manner[index - 1])
+            ...this.rules.splice(index, 1, this.rules[index - 1])
           );
           break;
         case "down":
-          this.manner.splice(
+          this.rules.splice(
             index + 1,
             1,
-            ...this.manner.splice(index, 1, this.manner[index + 1])
+            ...this.rules.splice(index, 1, this.rules[index + 1])
           );
           break;
         default:
           break;
       }
+      this.rules.map((x, i) => {
+        x.index = i;
+      });
     },
     /** 弹窗确定事件 */
     handleOk(e) {
@@ -603,9 +606,6 @@ export default {
   position: relative;
   margin-bottom: 20px;
 }
-.container .conflictTip .metion {
-  width: 60%;
-}
 .container .conflictTip .view {
   color: #1890ff;
   position: absolute;
@@ -620,10 +620,7 @@ export default {
   list-style: none;
   margin-bottom: 10px;
 }
-.popup ul li span {
-  margin-right: 20px;
-}
-.popup ul li span:first-child {
+.popup ul li > span:first-child {
   width: 20px;
   height: 20px;
   background-color: #1890ff;

@@ -11,7 +11,7 @@
               >
             </li>
             <li
-              v-for="(item, index) in rules"
+              v-for="(item, index) in sortedRules"
               :key="index"
               @click="changeTab(index)"
               :class="id == item.id ? 'active' : ''"
@@ -51,6 +51,11 @@ export default {
       details: {} //规则详情
     };
   },
+  computed: {
+    sortedRules() {
+      return this.rules.slice().sort((a, b) => a.order - b.order);
+    }
+  },
   mounted() {
     Promise.all([
       this.$getRuleMatchTypes(),
@@ -75,11 +80,11 @@ export default {
             this.spinning = false;
             if (res.data != [] && res.data.length != 0) {
               this.rules = res.data;
-              this.$nextTick(function() {
-                if (this.anyRules()) {
-                  this.id = this.rules[0].id;
-                }
-              });
+                this.$nextTick(function() {
+                  if (this.anyRules()) {
+                    this.id = this.id || this.rules[0].id;
+                  }
+                });
             }
             resolve(this.rules);
           }
