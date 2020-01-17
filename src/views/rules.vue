@@ -26,7 +26,8 @@
             :id="id"
             :rules="rules"
             @cancelAdd="onCancelAdd"
-            @refresh="refresh"
+            @itemUpdated="onItemUpdated"
+            @itemCreated="onItemCreated"
             v-if="this.anyRules()"
           ></RulesDetail>
           <div v-else class="noRule">暂无规则，请先添加规则！</div>
@@ -80,11 +81,11 @@ export default {
             this.spinning = false;
             if (res.data != [] && res.data.length != 0) {
               this.rules = res.data;
-                this.$nextTick(function() {
-                  if (this.anyRules()) {
-                    this.id = this.id || this.rules[0].id;
-                  }
-                });
+              this.$nextTick(function() {
+                if (this.anyRules()) {
+                  this.id = this.id || this.rules[0].id;
+                }
+              });
             }
             resolve(this.rules);
           }
@@ -116,7 +117,13 @@ export default {
     },
 
     /** 每次请求接口后刷新页面要做的事 */
-    refresh() {
+    onItemUpdated() {
+      //resort
+      this.rules.forEach(x => {
+        x.order = typeof x.index == "number" ? x.index : x.order;
+      });
+    },
+    onItemCreated() {
       this.getList();
     }
   }

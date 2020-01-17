@@ -147,35 +147,31 @@
         <div class="popup" v-show="details.enabled && isConflict">
           <div class="conflictTip">
             <a-alert
-              message="规则间覆盖流量有重叠，请确认或调整【标红规则】的执行顺序。"
+              message="规则间覆盖流量有重叠，请确认或调整执行顺序。"
               banner
             />
             <br />
             <ul>
-              <li v-for="(item, index) in rules" :key="index">
+              <li v-for="(item, index) in conflictedRules" :key="index">
                 <span>{{ index + 1 }}</span>
                 <span style="width:60px;margin-right:0px;">
                   <span style="width:20px;display:inline-block;">
                     <a-icon
                       class="arrow arrup"
                       type="arrow-up"
-                      v-if="index != 0 && conflicts.indexOf(item.id) != -1"
+                      v-if="index != 0"
                       @click="arrowClick('up', index)"
                   /></span>
                   <span style="width:20px;display:inline-block;">
                     <a-icon
                       class="arrow arrdw"
                       type="arrow-down"
-                      v-if="
-                        index != rules.length - 1 &&
-                          conflicts.indexOf(item.id) != -1
-                      "
+                      v-if="index != conflictedRules.length - 1"
                       @click="arrowClick('down', index)"
                   /></span>
                 </span>
                 <span
                   style="width:180px;display:inline-block;"
-                  :style="conflicts.indexOf(item.id) != -1 ? 'color:red' : ''"
                   :class="item.id == details.id ? 'conflict-current' : ''"
                   >{{ item.name }}</span
                 >
@@ -197,6 +193,7 @@
         </p>
         <a-form-item :wrapper-col="{ span: 12 }">
           <a-button
+            :loading="submitting"
             ref="submitButton"
             :disabled="checking"
             type="primary"
@@ -230,6 +227,7 @@ export default {
         name: "",
         id: 0
       },
+      submitting: false,
       checking: false,
       formLayout: "inline",
       form: this.$form.createForm(this, { name: "rules" }),
@@ -247,18 +245,39 @@ export default {
       arr: [], //暂存总的规则数组
       flowSetNum: "", //分组分配流量
       detailSpinning: false,
-      conflicts: []
+      conflicts: [],
+      conflictedRules: []
     };
   },
-  computed: {
-    sortedRules() {
-      var x = this.rules
-        .slice()
-        .sort((a, b) => a.index || a.order - b.index || b.order);
-      return x;
-    }
-  },
+  computed: {},
   methods: {
+    buildConflictedRules() {
+      this.rules.forEach(x => {
+        const idx = x.index;
+        x.index = typeof x.index == "number" ? x.index : x.order;
+        // console.log(
+        //   "index changes from " +
+        //     idx +
+        //     " to " +
+        //     x.index +
+        //     " for " +
+        //     x.name +
+        //     " (order=" +
+        //     x.order
+        // );
+      });
+      if (this.conflicts.length > 1) {
+        this.conflictedRules = [];
+        this.rules
+          .filter(x => this.conflicts.indexOf(x.id) != -1)
+          .sort((a, b) => a.index - b.index)
+          .forEach(element => {
+            this.conflictedRules.push(element);
+          });
+      } else {
+        return [];
+      }
+    },
     getMatchValues(typeId) {
       var values = [];
       var items = this.cachedValues.filter(x => x.typeId == typeId);
@@ -304,7 +323,6 @@ export default {
     /** 停用按钮 - 只是个页面样式 */
     onChange(checked) {
       this.details.enabled = checked;
-
       this.checkConflict();
     },
     /** 添加条件 */
@@ -371,7 +389,7 @@ export default {
           break;
       }
     },
-    
+
     /** 删除 */
     deletes(type, index) {
       if (type == "matcher") {
@@ -442,6 +460,7 @@ export default {
     /** 最后确认提交表单 */
     submitForm(hash) {
       var url_ = "";
+      this.submitting = true;
       if (this.details.id == 0) {
         //新增
         url_ = "Rules/AddRule?hash=" + hash;
@@ -449,14 +468,16 @@ export default {
         url_ = "Rules/UpdateRule?hash=" + hash;
       }
       this.$doRequest(url_, this.buildFormData(), "post", res => {
+        this.submitting = false;
         if (res.code == 0) {
           if (this.details.id == 0) {
             //新增
             this.$message.success("添加成功！");
+            this.$emit("itemCreated");
           } else {
             this.$message.success("修改成功！");
+            this.$emit("itemUpdated");
           }
-          this.$emit("refresh");
         }
       });
     },
@@ -483,28 +504,28 @@ export default {
     },
     /** 箭头点击事件 */
     arrowClick(type, index) {
-      var rule = this.rules[index];
+      var rules = this.conflictedRules;
+      var rule = rules[index];
+      const current_index = rule.index;
       switch (type) {
         case "up":
-          this.rules.splice(
-            index - 1,
-            1,
-            ...this.rules.splice(index, 1, this.rules[index - 1])
-          );
+          var prev = rules[index - 1];
+          rule.index = prev.index;
+          prev.index = current_index;
           break;
         case "down":
-          this.rules.splice(
-            index + 1,
-            1,
-            ...this.rules.splice(index, 1, this.rules[index + 1])
-          );
-          break;
-        default:
+          var next = rules[index + 1];
+          rule.index = next.index;
+          next.index = current_index;
           break;
       }
-      this.rules.map((x, i) => {
-        x.index = i;
-      });
+      this.buildConflictedRules();
+      console.log("up/down result:");
+      rules = this.conflictedRules;
+      for (let index = 0; index < rules.length; index++) {
+        const element = rules[index];
+        console.log(element.name + " " + element.index);
+      }
     },
     /** 弹窗确定事件 */
     handleOk(e) {
@@ -556,10 +577,27 @@ export default {
         });
       }
     },
+    // rules: function() {
+    //   //restore rule index if rule list updated.
+    //   for (let i = 0; i < this.rules.length; i++) {
+    //     const rule = this.rules[i];
+    //     for (let j = 0; j < this.conflictedRules.length; j++) {
+    //       const conflictedRule = this.conflictedRules[j];
+    //       if (rule.id == conflictedRule) {
+    //         rule.index = conflictedRule.index;
+    //         console.log("index restored to " + rule.index + " for " + rule.nam);
+    //       }
+    //     }
+    //   }
+    // },
     matchers: function() {
       if (this.matchers.length < 5) {
         this.condition_btn = false;
       }
+    },
+    conflicts: function(value) {
+      console.log("buildConflictedRules excute.");
+      this.buildConflictedRules();
     }
   }
 };
