@@ -434,6 +434,7 @@ export default {
     },
     /** 判断是否冲突 */
     checkConflict() {
+      debugger;
       this.conflicts = [];
       this.isConflict = false;
       if (!this.details.enabled) return;
@@ -444,15 +445,13 @@ export default {
         this.buildFormData(),
         "post",
         res => {
+          this.checking = false;
           if (res.code == 0) {
             this.hash = res.data.hash;
             this.conflicts = res.data.conflicts;
             if (this.conflicts.length > 1) {
               this.isConflict = true;
             }
-            this.checking = false;
-          } else {
-            this.$message.error(res.msg);
           }
         }
       );

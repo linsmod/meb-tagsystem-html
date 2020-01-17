@@ -70,6 +70,7 @@ export default {
   methods: {
     onCancelAdd() {
       this.rules = this.rules.filter(x => x.id != 0);
+      if (this.anyRules()) this.id = this.id || this.rules[0].id;
     },
     anyRules() {
       return this.rules.length > 0;
@@ -95,7 +96,7 @@ export default {
     /** 添加规则 */
     addRule() {
       if (this.rules.filter(x => x.id == 0).length > 0) {
-        this.$message.info("请先保存新增的规则");
+        this.$message.info("请先保存或取消正在新增的规则");
         return;
       }
       this.rules.push({
@@ -103,7 +104,8 @@ export default {
         enabled: false,
         id: 0,
         name: "规则" + (this.rules.length + 1),
-        order: 0,
+        order: -1,
+        index: -1,
         updateTime: ""
       });
       this.id = 0;

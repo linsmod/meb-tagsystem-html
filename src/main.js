@@ -12,7 +12,7 @@ Vue.use(Antd);
 Vue.config.productionTip = true;
 Vue.prototype.$baseURI = "https://dh.meb.com:8047/api";
 // Vue.prototype.$baseURI = "https://dh.meb.com:8055/api";
- //Vue.prototype.$baseURI = "http://localhost:62960/api";
+//Vue.prototype.$baseURI = "http://localhost:62960/api";
 Vue.prototype.valueSorter = function (a, b) {
   // var l = a || "";
   // var r = a || "";
@@ -156,6 +156,7 @@ Vue.prototype.$doRequest = function (path, param = {}, method, cb) {
     type: "json"
   }).then(data => {
     if (data && data.code && data.code !== 0) {
+      cb && cb.call(this, data);
       this.$message.error(data.msg || "unknown error.");
     } else {
       cb && cb.call(this, data);
