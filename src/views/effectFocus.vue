@@ -21,13 +21,17 @@
         :defautValue="level"
       >
       </a-select>
-      <a-range-picker slot="extra" format="YYYY-MM-DD" :value="dateRange" />
+      <a-range-picker
+        slot="extra"
+        @change="onDateRangeChange"
+        format="YYYY-MM-DD"
+        :value="dateRange"
+      />
       <a-button type="primary" @click="search">搜索</a-button>
     </div>
     <p></p>
     <!-- <a href="#" slot="extra">more</a> -->
     <div>
-     
       <div
         v-show="this.prev != null && ready"
         style="cursor:pointer"
@@ -35,9 +39,13 @@
       >
         [&lt;&lt;返回]
       </div>
-      <div id="sankey" style="width: 100%;height: 650px;"></div>
-       <p v-show="spreadtypeId == '-1' && ready">
-        <a-alert message="点击图中的 [渠道色块] 查看对应渠道分配情况" type="info" />
+      <div v-show="!empty" id="sankey" style="width: 100%;height: 650px;"></div>
+      <a-empty v-show="empty" />
+      <p v-show="!empty && spreadtypeId == '-1' && ready">
+        <a-alert
+          message="点击图中的 [渠道色块] 查看对应渠道分配情况"
+          type="info"
+        />
       </p>
       <!-- <div id="myCharts" ref="myCharts" :style="{height:chartHeight}"></div> -->
     </div>
@@ -50,6 +58,7 @@ import moment from "moment";
 export default {
   data() {
     return {
+      empty: false,
       ready: false,
       dateRange: [moment().subtract(15, "days"), moment()],
       ways: [], //推广渠道 下拉框数组
@@ -68,9 +77,13 @@ export default {
     this.getWays();
   },
   methods: {
+    onDateRangeChange(value) {
+      debugger;
+      this.dateRange = value;
+    },
     goBack() {
       this.handleChange(this.prev.spreadtypeId);
-      this.prev=null;
+      this.prev = null;
       this.init_sankey();
     },
     onLevelChange(value) {
@@ -133,6 +146,7 @@ export default {
           if (res.code == 0) {
             myChart.hideLoading();
             this.ready = true;
+            this.empty = res.data.nodes.length == 0;
             option = {
               tooltip: {
                 trigger: "item",
