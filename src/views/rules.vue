@@ -119,7 +119,10 @@ export default {
     },
 
     /** 每次请求接口后刷新页面要做的事 */
-    onItemUpdated() {
+    onItemUpdated(details) {
+      var rule = this.rules.filter(x=>x.id==details.id)[0];
+      rule.name=details.name;
+      rule.updateTime=details.updateTime;
       //resort
       this.rules.forEach(x => {
         x.order = typeof x.index == "number" ? x.index : x.order;

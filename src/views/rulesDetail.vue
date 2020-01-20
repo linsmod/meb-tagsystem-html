@@ -434,7 +434,6 @@ export default {
     },
     /** 判断是否冲突 */
     checkConflict() {
-      debugger;
       this.conflicts = [];
       this.isConflict = false;
       if (!this.details.enabled) return;
@@ -475,7 +474,7 @@ export default {
             this.$emit("itemCreated");
           } else {
             this.$message.success("修改成功！");
-            this.$emit("itemUpdated");
+            this.$emit("itemUpdated",this.details);
           }
         }
       });
