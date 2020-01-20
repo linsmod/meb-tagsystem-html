@@ -1,40 +1,43 @@
 <template>
   <div>
     <a-card :loading="loading">
-      <a-input-search
-        slot="title"
-        placeholder="输入ID、用户名搜索"
-        style="width: 200px"
-        @search="onSearch"
-      />
-      <a href="#" slot="extra">更新于{{$route.query.updateTime}}</a>
-      <a-select
+      <strong slot="title">咨询师标签查询</strong>
+      <a href="#" slot="extra">更新于{{ $route.query.updateTime }}</a>
+      <div>
+        <a-select
+        class="enhancedSelect"
         mode="multiple"
-        style="width: 100%;"
+        style="width: 200px;"
         @change="handleChange"
         :labelInValue="true"
-        placeholder="选择要显示的标签"
+        :placeholder="tipText"
         :value="selectedLabels"
         :options="options"
       >
-        <!-- <a-select-option
-          v-for="i in labels"
-          :key="(i + 9).toString(36) + i"
-        >{{(i + 9).toString(36) + i}}</a-select-option>-->
       </a-select>
+        <a-input-search
+        placeholder="输入ID、用户名搜索"
+        style="width: 200px"
+        @search="onSearch"
+      /></div>
       <p></p>
       <a-table
         :pagination="{ pageSize: 50 }"
         :columns="columns()"
         rowKey="realname"
-        :scroll="{x:1500}"
+        :scroll="{ x: 1500 }"
         :dataSource="tableData"
         :loading="tableLoading"
       >
         <div slot="action" slot-scope="item">
           <router-link
-            :to="{ name: 'details', query: { user: item.realname },params:{labelDefs:labelDefs}}"
-          >查看详情</router-link>
+            :to="{
+              name: 'details',
+              query: { user: item.realname },
+              params: { labelDefs: labelDefs }
+            }"
+            >查看详情</router-link
+          >
         </div>
         <!-- <a slot="action" slot-scope="item" :href="'#/index/details?user='+item.realname">查看详情</a> -->
       </a-table>
@@ -45,12 +48,13 @@
 export default {
   data() {
     return {
+      tipText: "选择标签",
       labelDefs: [],
       loading: true,
       tableLoading: true,
       fixedLabels: [
-        { key: "id", label: "ID", fixed: "left" },
-        { key: "realname", label: "姓名", fixed: "left" }
+        { key: "id", label: "ID" },
+        { key: "realname", label: "姓名" }
       ],
       selectedLabels: [], //搜索参数2
       user: "", //搜索参数1
@@ -63,7 +67,7 @@ export default {
     labelString() {
       return this.fixedLabels
         .concat(this.selectedLabels)
-        .map(x => x.key.split('|')[0])
+        .map(x => x.key.split("|")[0])
         .join(",");
     },
     columns() {
@@ -71,7 +75,7 @@ export default {
         return {
           fixed: x.fixed,
           title: x.label,
-          dataIndex: x.key.split('|')[0],
+          dataIndex: x.key.split("|")[0],
           sorter: x.fixed
             ? false
             : (a, b) => this.valueSorter(a[x.key], b[x.key]),
@@ -81,7 +85,6 @@ export default {
       vals.push({
         title: "操作",
         key: "operation",
-        fixed: "right",
         width: 100,
         scopedSlots: { customRender: "action" }
       });
@@ -89,7 +92,7 @@ export default {
     },
     getLabels(cb) {
       //1、下载标签的定义信息
-      this.$doRequest("UserLabel/GetLabels", {},'get', d => {
+      this.$doRequest("UserLabel/GetLabels", {}, "get", d => {
         this.labelDefs = d;
         window.labelDefs = d;
         this.options = d
@@ -97,9 +100,9 @@ export default {
           //.sort((a, b) => (a.field || "").localeCompare(b.field || ""))
           .map(x => {
             return {
-              value: x.field + '|'+x.name,
+              value: x.field + "|" + x.name,
               label: x.name,
-              key: x.field + '|'+x.name
+              key: x.field + "|" + x.name
             };
           });
 
@@ -112,7 +115,7 @@ export default {
     },
     handleChange(value) {
       debugger;
-      this.selectedLabels=value;
+      this.selectedLabels = value;
       this.doSearch();
     },
     // handleSelect(value) {
@@ -147,13 +150,19 @@ export default {
           labels: this.labelString(),
           date: this.$fixDate(this.updateTime)
         },
-        'get',
+        "get",
         d => {
           this.tableData = d;
           window.tableData = d;
           this.tableLoading = false;
         }
       );
+    }
+  },
+  watch: {
+    selectedLabels(value) {
+      this.tipText =
+        value.length == 0 ? "选择标签" : "已选中" + value.length + "个标签";
     }
   },
   mounted() {
@@ -168,4 +177,11 @@ export default {
   }
 };
 </script>
-
+<style>
+.enhancedSelect .ant-select-selection__choice {
+  display: none !important;
+}
+.enhancedSelect .ant-select-selection__placeholder {
+  display: inline-block !important;
+}
+</style>
