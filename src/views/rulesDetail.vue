@@ -138,19 +138,16 @@
           style="margin-bottom:20px"
           >添加分组</a-button
         >
-
-        <p v-show="!checking && !isConflict">
-          <a-icon type="check-circle" theme="twoTone" twoToneColor="#52c41a" />
-          <span v-if="details.enabled">没有冲突</span
-          ><span v-else>规则未启用，冲突检测已关闭</span>
+        <p>
+          <a-alert
+            v-if="!checking"
+            :type="alertType"
+            :message="alertMsg"
+            banner
+          />
         </p>
         <div class="popup" v-show="details.enabled && isConflict">
           <div class="conflictTip">
-            <a-alert
-              message="规则间覆盖流量有重叠，请确认或调整执行顺序。"
-              banner
-            />
-            <br />
             <ul>
               <li v-for="(item, index) in conflictedRules" :key="index">
                 <span>{{ index + 1 }}</span>
@@ -246,7 +243,9 @@ export default {
       flowSetNum: "", //分组分配流量
       detailSpinning: false,
       conflicts: [],
-      conflictedRules: []
+      conflictedRules: [],
+      alertMsg: "...",
+      alertType: "info"
     };
   },
   computed: {},
@@ -279,6 +278,9 @@ export default {
       }
     },
     getMatchValues(typeId) {
+      if (typeId == null) {
+        return [];
+      }
       var values = [];
       var items = this.cachedValues.filter(x => x.typeId == typeId);
       if (items && items.length > 0) {
@@ -348,6 +350,7 @@ export default {
         default:
           break;
       }
+      this.checkConflict();
     },
     /** 切换下拉框 */
     handleSelectChange(type, value, index) {
@@ -394,10 +397,10 @@ export default {
     deletes(type, index) {
       if (type == "matcher") {
         this.details.matches.splice(index, 1);
-        this.checkConflict();
       } else {
         this.details.delivers.splice(index, 1);
       }
+      this.checkConflict();
     },
     handleSubmit(e) {
       e.preventDefault();
@@ -436,24 +439,32 @@ export default {
     checkConflict() {
       this.conflicts = [];
       this.isConflict = false;
-      if (!this.details.enabled) return;
+      if (!this.details.enabled) {
+        this.alertMsg = "规则未启用，冲突检测已关闭";
+        this.alertType = "success";
+        return;
+      }
       this.hash = null;
       this.checking = true;
-      this.$doRequest(
-        "Rules/CheckConflict",
-        this.buildFormData(),
-        "post",
-        res => {
+      this.$doHttpPost("Rules/CheckConflict", this.buildFormData())
+        .then(d => {
           this.checking = false;
-          if (res.code == 0) {
-            this.hash = res.data.hash;
-            this.conflicts = res.data.conflicts;
-            if (this.conflicts.length > 1) {
-              this.isConflict = true;
-            }
+          this.hash = d.hash;
+          this.conflicts = d.conflicts;
+          if (this.conflicts.length > 1) {
+            this.isConflict = true;
+            this.alertMsg = "规则间覆盖流量有重叠，请确认或调整执行顺序。";
+            this.alertType = "warning";
+          } else {
+            this.alertMsg = "没有冲突";
+            this.alertType = "success";
           }
-        }
-      );
+        })
+        .catch(e => {
+          this.checking = false;
+          this.alertMsg = e.msg;
+          this.alertType = "warning";
+        });
     },
     /** 最后确认提交表单 */
     submitForm(hash) {
@@ -474,7 +485,7 @@ export default {
             this.$emit("itemCreated");
           } else {
             this.$message.success("修改成功！");
-            this.$emit("itemUpdated",this.details);
+            this.$emit("itemUpdated", this.details);
           }
         }
       });
@@ -568,6 +579,7 @@ export default {
           id: 0
         };
         this.detailSpinning = false;
+        this.checkConflict();
       } else {
         this.detailSpinning = true;
         this.getDetails(value).then(x => {

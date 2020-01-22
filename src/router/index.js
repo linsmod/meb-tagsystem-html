@@ -6,6 +6,7 @@ import query from "@/views/query";
 import details from "@/views/details";
 import sorts from '@/views/sorts';
 import rules from "@/views/rules";
+import ruleTest from "@/views/ruleTest"
 import effectFocus from '@/views/effectFocus';
 Vue.use(Router);
 const originalPush = Router.prototype.push;
@@ -87,6 +88,19 @@ window.routes = [
           icon: "setting",
           sidebar: 1, //是否显示在侧边栏
           key:5
+        }
+      },
+      {
+        path: "/sorts/ruleTest",
+        name: "ruleTest",
+        component: ruleTest,
+        meta: {
+          title: "规则测试",
+          breadcrumb: ["智能分单", "规则测试"],
+          selectedKey: "tags", //标记侧边栏的哪个菜单是选中状态
+          icon: "bulb",
+          sidebar: 1, //是否显示在侧边栏
+          key:7
         }
       },
       {
